@@ -4,7 +4,7 @@ using Sodao.FastSocket.Client.Response;
 namespace Redis.Driver
 {
     /// <summary>
-    /// redis reply interface
+    /// redis reply interface.
     /// </summary>
     public interface IRedisReply : IResponse
     {
