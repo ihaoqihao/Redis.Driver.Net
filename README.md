@@ -1,3 +1,3 @@
 Redis.Driver.Net
 ================
-An Open Source C# Async Client for Redis
+Redis c#异步客户端，.Net4.0
