@@ -47,12 +47,15 @@
     <Compile Include="Config\EndpointCollection.cs" />
     <Compile Include="Config\EndpointConfig.cs" />
     <Compile Include="Config\RedisConfigSection.cs" />
+    <Compile Include="IKeyCommands.cs" />
+    <Compile Include="IStringCommands.cs" />
     <Compile Include="RedisReply.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RedisClient.cs" />
     <Compile Include="RedisClientFactory.cs" />
     <Compile Include="RedisException.cs" />
     <Compile Include="RedisProtocol.cs" />
+    <Compile Include="RedisRequest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

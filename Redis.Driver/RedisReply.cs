@@ -37,6 +37,17 @@ namespace Redis.Driver
             this.ErrorMessage = errorMessage;
         }
         #endregion
+
+        #region Public Methods
+        /// <summary>
+        /// return RedisException
+        /// </summary>
+        /// <returns></returns>
+        public RedisException Error()
+        {
+            return new RedisException(this.ErrorMessage);
+        }
+        #endregion
     }
     #endregion
 
