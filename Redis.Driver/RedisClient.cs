@@ -32,6 +32,16 @@ namespace Redis.Driver
         }
         #endregion
 
+        #region Public Properties
+        /// <summary>
+        /// Strings
+        /// </summary>
+        public IStringCommands Strings
+        {
+            get { return this; }
+        }
+        #endregion
+
         #region IStringCommands Members
         /// <summary>
         /// If key already exists and is a string, 

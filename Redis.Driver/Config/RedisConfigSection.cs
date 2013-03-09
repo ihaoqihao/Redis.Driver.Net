@@ -11,7 +11,7 @@ namespace Redis.Driver.Config
         /// endpoint collection。
         /// </summary>
         [ConfigurationProperty("client", IsRequired = true)]
-        public EndpointCollection Services
+        public EndpointCollection Clients
         {
             get { return this["client"] as EndpointCollection; }
         }
