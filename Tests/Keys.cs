@@ -16,5 +16,20 @@ namespace Tests
             var result = client.Strings.Append("mykey1", "fuck").Result;
             Assert.Greater(result, 0);
         }
+        [Test]
+        public void GetBit()
+        {
+            var client = Redis.Driver.RedisClientFactory.Get("test1");
+            client.Strings.GetBit("key1", 7).ContinueWith(c =>
+            {
+                Console.WriteLine(c.Result);
+            });
+        }
+        [Test]
+        public void Mget()
+        {
+            var client = Redis.Driver.RedisClientFactory.Get("test1");
+            client.Strings.Get("a", "b", "c").Wait();
+        }
     }
 }

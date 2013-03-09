@@ -139,6 +139,23 @@ namespace Redis.Driver
     /// </summary>
     public sealed class MultiBulkReplies : IRedisReply
     {
+        #region Public Members
+        /// <summary>
+        /// payloads
+        /// </summary>
+        public readonly byte[][] Payloads;
+        #endregion
+
+        #region Constructors
+        /// <summary>
+        /// new
+        /// </summary>
+        /// <param name="payloads"></param>
+        public MultiBulkReplies(byte[][] payloads)
+        {
+            this.Payloads = payloads;
+        }
+        #endregion
     }
     #endregion
 }

@@ -19,6 +19,8 @@ namespace Redis.Driver
         /// <exception cref="BadProtocolException">未能识别的协议</exception>
         public IRedisReply FindResponse(byte[] buffer, out int readed)
         {
+            var str = Encoding.UTF8.GetString(buffer);
+
             if (buffer == null || buffer.Length == 0)
             {
                 readed = 0;
@@ -141,7 +143,7 @@ namespace Redis.Driver
                 return null;
             }
             //nil
-            if (buffer[1] == '-' && buffer[2] == '1')
+            if (buffer[1] == 45 && buffer[2] == 48)//-1
             {
                 readed = 3;
                 return new BulkReplies(null);
@@ -182,8 +184,49 @@ namespace Redis.Driver
         /// <returns></returns>
         private MultiBulkReplies FindMultiBulk(byte[] buffer, out int readed)
         {
+            int length = buffer.Length;
+            if (length < 3)
+            {
+                readed = 0;
+                return null;
+            }
+            //nil
+            if (buffer[1] == 45 && buffer[2] == 48) //-1
+            {
+                readed = 3;
+                return new MultiBulkReplies(null);
+            }
+
             readed = 0;
             return null;
+        }
+        #endregion
+
+        #region Private Class
+        /// <summary>
+        /// buffer segment
+        /// </summary>
+        private struct BufferSegment
+        {
+            /// <summary>
+            /// index
+            /// </summary>
+            public int Index;
+            /// <summary>
+            /// length
+            /// </summary>
+            public int Length;
+
+            /// <summary>
+            /// new
+            /// </summary>
+            /// <param name="index"></param>
+            /// <param name="length"></param>
+            public BufferSegment(int index, int length)
+            {
+                this.Index = index;
+                this.Length = length;
+            }
         }
         #endregion
     }
