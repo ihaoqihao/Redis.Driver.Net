@@ -1,3 +1,3 @@
-Redis.Driver.Net
+﻿Redis.Driver.Net
 ================
-Redis c# 异步客户端，支持.Net4.0以及以上。
+Redis c# 异步客户端，.net 4.0+。
