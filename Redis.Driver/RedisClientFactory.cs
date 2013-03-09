@@ -37,7 +37,7 @@ namespace Redis.Driver
                 foreach (Config.ServerConfig server in clientConfig.Servers)
                     redisClient.RegisterServerNode(string.Concat(server.Host, server.Port),
                         new IPEndPoint(IPAddress.Parse(server.Host), server.Port));
-
+                
                 return redisClient;
             }, true)).Value;
         }

@@ -45,6 +45,7 @@ namespace Redis.Driver
                 throw new ArgumentNullException("value");
 
             var bytes = Encoding.UTF8.GetBytes(value);
+            this._stream.WriteByte((byte)'$');
             Write(this._stream, bytes.Length);
             this._stream.WriteByte(13);
             this._stream.WriteByte(10);
@@ -65,6 +66,7 @@ namespace Redis.Driver
             if (value == null || value.Length == 0)
                 throw new ArgumentNullException("value");
 
+            this._stream.WriteByte((byte)'$');
             Write(this._stream, value.Length);
             this._stream.WriteByte(13);
             this._stream.WriteByte(10);
@@ -84,10 +86,7 @@ namespace Redis.Driver
                 return null;
 
             using (this._stream)
-            {
-                this._stream = null;
                 return this._stream.ToArray();
-            }
         }
         #endregion
 
@@ -100,11 +99,11 @@ namespace Redis.Driver
         static private void Write(MemoryStream stream, int value)
         {
             if (value >= 0 && value <= 9)
-                stream.WriteByte((byte)((int)'0' + (int)value));
+                stream.WriteByte((byte)(48 + value));//'0'+value
             else if (value < 0 && value >= -9)
             {
-                stream.WriteByte((byte)'-');
-                stream.WriteByte((byte)((int)'0' - (int)value));
+                stream.WriteByte(45);//'-'
+                stream.WriteByte((byte)(48 - value));//'0'-value
             }
             else
             {

@@ -62,7 +62,7 @@ namespace Redis.Driver
             {
                 if (buffer[i] == 13 && i + 1 < length && buffer[i + 1] == 10)
                 {
-                    readed = i + 1;
+                    readed = i + 2;
                     return new StatusReply(Encoding.UTF8.GetString(buffer, 1, i - 1));
                 }
             }
@@ -88,7 +88,7 @@ namespace Redis.Driver
             {
                 if (buffer[i] == 13 && i + 1 < length && buffer[i + 1] == 10)
                 {
-                    readed = i + 1;
+                    readed = i + 2;
                     return new ErrorReply(Encoding.UTF8.GetString(buffer, 1, i - 1));
                 }
             }
@@ -114,7 +114,7 @@ namespace Redis.Driver
             {
                 if (buffer[i] == 13 && i + 1 < length && buffer[i + 1] == 10)
                 {
-                    readed = i + 1;
+                    readed = i + 2;
                     int value = 0;
                     if (!int.TryParse(Encoding.UTF8.GetString(buffer, 1, i - 1), out value))
                         throw new BadProtocolException();

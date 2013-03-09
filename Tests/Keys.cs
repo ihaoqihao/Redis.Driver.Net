@@ -13,7 +13,8 @@ namespace Tests
         public void Append()
         {
             var client = Redis.Driver.RedisClientFactory.Get("test1");
-            client.Strings.Append("mykey1", "fuck");
+            var result = client.Strings.Append("mykey1", "fuck").Result;
+            Assert.Greater(result, 0);
         }
     }
 }
