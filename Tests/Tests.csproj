@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Keys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Protocol.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Redis.Driver\Redis.Driver.csproj">

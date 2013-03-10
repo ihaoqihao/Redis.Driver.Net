@@ -19,8 +19,6 @@ namespace Redis.Driver
         /// <exception cref="BadProtocolException">未能识别的协议</exception>
         public IRedisReply FindResponse(byte[] buffer, out int readed)
         {
-            var str = Encoding.UTF8.GetString(buffer);
-
             if (buffer == null || buffer.Length == 0)
             {
                 readed = 0;
@@ -113,6 +111,7 @@ namespace Redis.Driver
         /// <returns></returns>
         private BulkReplies FindBulk(byte[] buffer, out int readed)
         {
+            //find bulk length
             var prefixed = GetPrefixedLength(buffer, 0);
             if (prefixed.OverIndex == -1)
             {
@@ -157,17 +156,22 @@ namespace Redis.Driver
                 return null;
             }
 
+            if (prefixed.Value < 1)
+            {
+                readed = prefixed.OverIndex + 1;
+                if (readed > buffer.Length)
+                {
+                    readed = 0;
+                    return null;
+                }
+                return new MultiBulkReplies(null);
+            }
+
             var arrBulk = new PrefixedLength[prefixed.Value];
             int bufferIndex = prefixed.OverIndex + 1;
 
             for (int i = 0, l = prefixed.Value; i < l; i++)
             {
-                if (bufferIndex >= buffer.Length)
-                {
-                    readed = 0;
-                    return null;
-                }
-
                 var childPrefixed = GetPrefixedLength(buffer, bufferIndex);
                 if (childPrefixed.OverIndex == -1)
                 {
@@ -176,28 +180,30 @@ namespace Redis.Driver
                 }
 
                 arrBulk[i] = childPrefixed;
-
                 if (childPrefixed.Value < 1)
                     bufferIndex = childPrefixed.OverIndex + 1;
                 else
                     bufferIndex = childPrefixed.OverIndex + childPrefixed.Value + 3;
             }
 
-            if (bufferIndex >= buffer.Length)
+            if (bufferIndex > buffer.Length)
             {
                 readed = 0;
                 return null;
             }
 
+            readed = bufferIndex;
             //copy data
             var arrPayloads = new byte[prefixed.Value][];
-            readed = bufferIndex + 1;
             for (int i = 0, l = prefixed.Value; i < l; i++)
             {
                 var childPrefixed = arrBulk[i];
-                var payload = new byte[childPrefixed.Value];
-                Buffer.BlockCopy(buffer, childPrefixed.OverIndex + 1, payload, 0, childPrefixed.Value);
-                arrPayloads[i] = payload;
+                if (childPrefixed.Value > 0)
+                {
+                    var payload = new byte[childPrefixed.Value];
+                    Buffer.BlockCopy(buffer, childPrefixed.OverIndex + 1, payload, 0, childPrefixed.Value);
+                    arrPayloads[i] = payload;
+                }
             }
             return new MultiBulkReplies(arrPayloads);
         }
@@ -211,13 +217,10 @@ namespace Redis.Driver
         /// <param name="index"></param>
         /// <returns>if not found, return {OverIndex=-1,Value=-1}</returns>
         /// <exception cref="ArgumentOutOfRangeException">start less than 0.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">start greater than or equal to buffer.Length.</exception>
         static private PrefixedLength GetPrefixedLength(byte[] buffer, int index)
         {
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index", "index less than 0.");
-            if (index >= buffer.Length)
-                throw new ArgumentOutOfRangeException("index", "index greater than or equal to buffer.Length.");
 
             if (buffer.Length - index < 2)
                 return new PrefixedLength(-1, -1);
