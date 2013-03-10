@@ -31,5 +31,11 @@ namespace Tests
             var client = Redis.Driver.RedisClientFactory.Get("test1");
             client.Strings.Get("a", "b", "c").Wait();
         }
+        [Test]
+        public void Get()
+        {
+            var client = Redis.Driver.RedisClientFactory.Get("test1");
+            client.Strings.Get("a").Wait();
+        }
     }
 }

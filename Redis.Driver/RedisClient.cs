@@ -94,6 +94,18 @@ namespace Redis.Driver
             return this.ExecuteMultiBytes(new RedisRequest(keys.Length + 1).AddArgument("MGET")
                 .AddArgument(keys));
         }
+        /// <summary>
+        /// Get the value of key. 
+        /// If the key does not exist the special value nil is returned. 
+        /// An error is returned if the value stored at key is not a string, because GET only handles string values.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns>the value of key, or nil when key does not exist.</returns>
+        Task<byte[]> IStringCommands.Get(string key)
+        {
+            return this.ExecuteBytes(new RedisRequest(2).AddArgument("GET")
+                .AddArgument(key));
+        }
         #endregion
 
         #region Private Methods
@@ -142,6 +154,35 @@ namespace Redis.Driver
                     if (mbReeply != null)
                     {
                         source.TrySetResult(mbReeply.Payloads);
+                        return;
+                    }
+
+                    if (reply is ErrorReply)
+                    {
+                        source.TrySetException((reply as ErrorReply).Error());
+                        return;
+                    }
+
+                    source.TrySetException(new RedisException("failed parse the reply"));
+                }));
+            return source.Task;
+        }
+        /// <summary>
+        /// execute bytes
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private Task<byte[]> ExecuteBytes(RedisRequest request)
+        {
+            var source = new TaskCompletionSource<byte[]>();
+            this.Send(new Request<IRedisReply>(null, null, 0, request.ToPayload(), null,
+                ex => source.TrySetException(ex),
+                reply =>
+                {
+                    var mbReeply = reply as BulkReplies;
+                    if (mbReeply != null)
+                    {
+                        source.TrySetResult(mbReeply.Payload);
                         return;
                     }
 

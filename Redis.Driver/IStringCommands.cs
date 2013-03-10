@@ -43,5 +43,13 @@ namespace Redis.Driver
         /// <param name="keys"></param>
         /// <returns>list of values at the specified keys.</returns>
         Task<byte[][]> Get(params string[] keys);
+        /// <summary>
+        /// Get the value of key. 
+        /// If the key does not exist the special value nil is returned. 
+        /// An error is returned if the value stored at key is not a string, because GET only handles string values.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns>the value of key, or nil when key does not exist.</returns>
+        Task<byte[]> Get(string key);
     }
 }
