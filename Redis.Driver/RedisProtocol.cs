@@ -98,6 +98,11 @@ namespace Redis.Driver
             }
 
             readed = prefixed.OverIndex + 1;
+            if (readed > buffer.Length)
+            {
+                readed = 0;
+                return null;
+            }
             return new IntegerReply(prefixed.Value);
         }
         /// <summary>
@@ -118,13 +123,17 @@ namespace Redis.Driver
             if (prefixed.Value < 1)
             {
                 readed = prefixed.OverIndex + 1;
+                if (readed > buffer.Length)
+                {
+                    readed = 0;
+                    return null;
+                }
                 return new BulkReplies(null);
             }
 
-            var leastBufferLgnth = prefixed.OverIndex + prefixed.Value + 3;
-            if (buffer.Length >= leastBufferLgnth)
+            readed = prefixed.OverIndex + prefixed.Value + 3;
+            if (buffer.Length >= readed)
             {
-                readed = leastBufferLgnth;
                 var payload = new byte[prefixed.Value];
                 Buffer.BlockCopy(buffer, prefixed.OverIndex + 1, payload, 0, prefixed.Value);
                 return new BulkReplies(payload);
@@ -158,6 +167,7 @@ namespace Redis.Driver
                     readed = 0;
                     return null;
                 }
+
                 var childPrefixed = GetPrefixedLength(buffer, bufferIndex);
                 if (childPrefixed.OverIndex == -1)
                 {
@@ -171,6 +181,12 @@ namespace Redis.Driver
                     bufferIndex = childPrefixed.OverIndex + 1;
                 else
                     bufferIndex = childPrefixed.OverIndex + childPrefixed.Value + 3;
+            }
+
+            if (bufferIndex >= buffer.Length)
+            {
+                readed = 0;
+                return null;
             }
 
             //copy data
