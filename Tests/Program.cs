@@ -26,7 +26,14 @@ namespace Tests
                                 Console.WriteLine("get key:a " + Encoding.UTF8.GetString(c.Result));
                         });
 
-                        client.Strings.Append("a", "!").ContinueWith(c =>
+                        //client.Strings.Append("a", "!").ContinueWith(c =>
+                        //{
+                        //    if (c.IsFaulted)
+                        //        Console.WriteLine(c.Exception.ToString());
+                        //    else
+                        //        Console.WriteLine("append key:a " + c.Result.ToString());
+                        //});
+                        client.Strings.GetBit("a", 9).ContinueWith(c =>
                         {
                             if (c.IsFaulted)
                                 Console.WriteLine(c.Exception.ToString());
