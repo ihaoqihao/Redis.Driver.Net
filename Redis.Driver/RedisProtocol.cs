@@ -9,6 +9,8 @@ namespace Redis.Driver
     /// </summary>
     public sealed class RedisProtocol : IProtocol<IRedisReply>
     {
+        private readonly System.Collections.Generic.Queue<string> _q = new System.Collections.Generic.Queue<string>();
+
         #region IProtocol Members
         /// <summary>
         /// find response

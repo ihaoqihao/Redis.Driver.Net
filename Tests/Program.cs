@@ -18,27 +18,16 @@ namespace Tests
                     int j = 0;
                     while (j++ < 1000)
                     {
-                        client.Strings.Get("a").ContinueWith(c =>
+                        client.Strings.Set(j.ToString(), Guid.NewGuid().ToString()).ContinueWith(c =>
                         {
-                            if (c.IsFaulted)
-                                Console.WriteLine(c.Exception.ToString());
-                            else
-                                Console.WriteLine("get key:a " + Encoding.UTF8.GetString(c.Result));
+                            Console.WriteLine((c as System.Threading.Tasks.Task<string>).Result);
                         });
-
-                        //client.Strings.Append("a", "!").ContinueWith(c =>
-                        //{
-                        //    if (c.IsFaulted)
-                        //        Console.WriteLine(c.Exception.ToString());
-                        //    else
-                        //        Console.WriteLine("append key:a " + c.Result.ToString());
-                        //});
-                        client.Strings.GetBit("a", 9).ContinueWith(c =>
+                        client.Strings.Get(j.ToString()).ContinueWith(c =>
                         {
                             if (c.IsFaulted)
                                 Console.WriteLine(c.Exception.ToString());
                             else
-                                Console.WriteLine("append key:a " + c.Result.ToString());
+                                Console.WriteLine(Encoding.UTF8.GetString(c.Result));
                         });
                     }
                 })

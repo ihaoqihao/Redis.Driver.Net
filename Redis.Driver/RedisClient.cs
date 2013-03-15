@@ -103,6 +103,30 @@ namespace Redis.Driver
             return this.ExecuteBytes(new RedisRequest(2).AddArgument("GET")
                 .AddArgument(key));
         }
+        /// <summary>
+        /// Set key to hold the string value. 
+        /// If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>always OK since SET can't fail.</returns>
+        Task IStringCommands.Set(string key, string value)
+        {
+            return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET")
+                .AddArgument(key).AddArgument(value));
+        }
+        /// <summary>
+        /// Set key to hold the string value. 
+        /// If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>always OK since SET can't fail.</returns>
+        Task IStringCommands.Set(string key, byte[] value)
+        {
+            return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET")
+                .AddArgument(key).AddArgument(value));
+        }
         #endregion
 
         #region Private Methods
@@ -120,9 +144,32 @@ namespace Redis.Driver
                 throw new ArgumentNullException("callback");
 
             var source = new TaskCompletionSource<T>();
-            base.Send(new Request<IRedisReply>(base.NextRequestSeqID(), payload, ex => source.TrySetException(ex),
-                reply => callback(source, reply)));
+            base.Send(new Request<IRedisReply>(base.NextRequestSeqID(), payload,
+                ex => source.TrySetException(ex), reply => callback(source, reply)));
             return source.Task;
+        }
+        /// <summary>
+        /// execute status
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private Task<string> ExecuteStatus(RedisRequest request)
+        {
+            return this.Execute<string>(request.ToPayload(), (source, reply) =>
+            {
+                var statusReply = reply as StatusReply;
+                if (statusReply != null)
+                {
+                    source.TrySetResult(statusReply.Status);
+                    return;
+                }
+                if (reply is ErrorReply)
+                {
+                    source.TrySetException((reply as ErrorReply).Error());
+                    return;
+                }
+                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            });
         }
         /// <summary>
         /// execute int
@@ -202,7 +249,7 @@ namespace Redis.Driver
         /// <returns></returns>
         protected override IRequestReceivingCollection<IRedisReply> InitializeRequestReceivingCollection()
         {
-            return null;
+            return new RedisReceivingQueue(this.MillisecondsReceiveTimeout);
         }
         #endregion
     }
