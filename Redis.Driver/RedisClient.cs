@@ -49,7 +49,7 @@ namespace Redis.Driver
         /// <param name="connection"></param>
         protected override void OnConnected(IConnection connection)
         {
-            connection.UserData = new DefaultRedisReplyList();
+            connection.UserData = new DefaultRedisReplyQueue();
             base.OnConnected(connection);
         }
         /// <summary>
@@ -59,7 +59,7 @@ namespace Redis.Driver
         /// <param name="packet"></param>
         protected override void OnStartSending(IConnection connection, Packet packet)
         {
-            (connection.UserData as IRedisReplyList).Enqueue((packet as Request<IRedisReply>).SeqID);
+            (connection.UserData as IRedisReplyQueue).Enqueue((packet as Request<IRedisReply>).SeqID);
             base.OnStartSending(connection, packet);
         }
         /// <summary>
@@ -70,7 +70,7 @@ namespace Redis.Driver
         protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
         {
             if (e.Status == SendCallbackStatus.Failed)
-                (connection.UserData as IRedisReplyList).Pull();
+                (connection.UserData as IRedisReplyQueue).Unenqueue();
 
             base.OnSendCallback(connection, e);
         }

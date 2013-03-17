@@ -53,7 +53,7 @@ namespace Redis.Driver
         /// <returns></returns>
         static private int GetSeqID(IConnection connection)
         {
-            return (connection.UserData as IRedisReplyList).Dequeue();
+            return (connection.UserData as IRedisReplyQueue).Dequeue();
         }
         /// <summary>
         /// find status reply

@@ -11,23 +11,29 @@ namespace Tests
         {
             var client = Redis.Driver.RedisClientFactory.Get("test1");
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 20; i++)
             {
+                int i2 = i;
                 new System.Threading.Thread(state =>
                 {
                     int j = 0;
-                    while (j++ < 1000)
+                    while (j++ < 2000)
                     {
-                        client.Strings.Set(j.ToString(), Guid.NewGuid().ToString()).ContinueWith(c =>
+                        string id = Guid.NewGuid().ToString();
+                        client.Strings.Set(i2.ToString() + j.ToString(), id).ContinueWith(c =>
                         {
-                            Console.WriteLine((c as System.Threading.Tasks.Task<string>).Result);
+                            //Console.WriteLine((c as System.Threading.Tasks.Task<string>).Result);
                         });
-                        client.Strings.Get(j.ToString()).ContinueWith(c =>
+                        client.Strings.Get(i2.ToString() + j.ToString()).ContinueWith(c =>
                         {
                             if (c.IsFaulted)
                                 Console.WriteLine(c.Exception.ToString());
                             else
-                                Console.WriteLine(Encoding.UTF8.GetString(c.Result));
+                            {
+                                if (Encoding.UTF8.GetString(c.Result) != id)
+                                    Console.WriteLine("error");
+                                //Console.WriteLine(Encoding.UTF8.GetString(c.Result) == id);
+                            }
                         });
                     }
                 })

@@ -12,7 +12,7 @@ namespace Tests
         [Test]
         public void Test()
         {
-            var list = new Redis.Driver.DefaultRedisReplyList();
+            var list = new Redis.Driver.DefaultRedisReplyQueue();
             list.Enqueue(1);
             list.Enqueue(2);
             list.Enqueue(3);
@@ -21,7 +21,7 @@ namespace Tests
 
             Assert.True(list.Dequeue() == 1);
             Assert.True(list.Dequeue() == 2);
-            Assert.True(list.Pull() == 5);
+            Assert.True(list.Unenqueue() == 5);
         }
     }
 }
