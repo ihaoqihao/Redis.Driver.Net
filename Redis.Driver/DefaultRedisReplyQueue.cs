@@ -13,7 +13,7 @@ namespace Redis.Driver
 
         #region IRedisReplyList Members
         /// <summary>
-        /// Adds seqID to the end of the list.
+        /// enqueue
         /// </summary>
         /// <param name="seqID"></param>
         public void Enqueue(int seqID)
@@ -22,7 +22,7 @@ namespace Redis.Driver
                 this._list.AddLast(seqID);
         }
         /// <summary>
-        /// Removes and returns the seqID at the end of the list.
+        /// un enqueue
         /// </summary>
         /// <returns></returns>
         public int Unenqueue()
@@ -38,7 +38,7 @@ namespace Redis.Driver
             return -1;
         }
         /// <summary>
-        /// Removes and returns the seqID at the beginning of the list.
+        /// dequeue
         /// </summary>
         /// <returns></returns>
         public int Dequeue()
