@@ -18,16 +18,13 @@ namespace Redis.Driver
         /// <param name="messageBufferSize">消息缓存区大小</param>
         /// <param name="millisecondsSendTimeout">发送超时时间</param>
         /// <param name="millisecondsReceiveTimeout">接收超时时间</param>
-        public RedisClient(int socketBufferSize,
-            int messageBufferSize,
-            int millisecondsSendTimeout,
-            int millisecondsReceiveTimeout)
+        public RedisClient(int socketBufferSize, int messageBufferSize, int millisecondsSendTimeout, int millisecondsReceiveTimeout)
             : base(null,
             new RedisProtocol(),
-            new RequestReceivingQueue<IRedisReply>(millisecondsReceiveTimeout),
             socketBufferSize,
             messageBufferSize,
-            millisecondsSendTimeout)
+            millisecondsSendTimeout,
+            millisecondsReceiveTimeout)
         {
         }
         #endregion
@@ -106,10 +103,35 @@ namespace Redis.Driver
             return this.ExecuteBytes(new RedisRequest(2).AddArgument("GET")
                 .AddArgument(key));
         }
+        /// <summary>
+        /// Set key to hold the string value. 
+        /// If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>always OK since SET can't fail.</returns>
+        Task IStringCommands.Set(string key, string value)
+        {
+            return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET")
+                .AddArgument(key).AddArgument(value));
+        }
+        /// <summary>
+        /// Set key to hold the string value. 
+        /// If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>always OK since SET can't fail.</returns>
+        Task IStringCommands.Set(string key, byte[] value)
+        {
+            return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET")
+                .AddArgument(key).AddArgument(value));
+        }
         #endregion
 
         #region Private Methods
         /// <summary>
+<<<<<<< HEAD
         /// exceute
         /// </summary>
         /// <typeparam name="TResult"></typeparam>
@@ -132,12 +154,56 @@ namespace Redis.Driver
             return source.Task;
         }
         /// <summary>
+=======
+        /// execute
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="payload"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">callback is null.</exception>
+        private Task<T> Execute<T>(byte[] payload, Action<TaskCompletionSource<T>, IRedisReply> callback)
+        {
+            if (callback == null)
+                throw new ArgumentNullException("callback");
+
+            var source = new TaskCompletionSource<T>();
+            base.Send(new Request<IRedisReply>(base.NextRequestSeqID(), payload,
+                ex => source.TrySetException(ex), reply => callback(source, reply)));
+            return source.Task;
+        }
+        /// <summary>
+        /// execute status
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private Task<string> ExecuteStatus(RedisRequest request)
+        {
+            return this.Execute<string>(request.ToPayload(), (source, reply) =>
+            {
+                var statusReply = reply as StatusReply;
+                if (statusReply != null)
+                {
+                    source.TrySetResult(statusReply.Status);
+                    return;
+                }
+                if (reply is ErrorReply)
+                {
+                    source.TrySetException((reply as ErrorReply).Error());
+                    return;
+                }
+                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            });
+        }
+        /// <summary>
+>>>>>>> 97f19c4c8d5c30fc486193b67645fd375e384396
         /// execute int
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         private Task<int> ExecuteInt(RedisRequest request)
         {
+<<<<<<< HEAD
             return this.Execute<int>(null, request, (reply) =>
             {
 
@@ -146,23 +212,23 @@ namespace Redis.Driver
             this.Send(new Request<IRedisReply>(0, request.ToPayload(), null,
                 ex => source.TrySetException(ex),
                 reply =>
+=======
+            return this.Execute<int>(request.ToPayload(), (source, reply) =>
+            {
+                var intReply = reply as IntegerReply;
+                if (intReply != null)
+>>>>>>> 97f19c4c8d5c30fc486193b67645fd375e384396
                 {
-                    var intReply = reply as IntegerReply;
-                    if (intReply != null)
-                    {
-                        source.TrySetResult(intReply.Value);
-                        return;
-                    }
-
-                    if (reply is ErrorReply)
-                    {
-                        source.TrySetException((reply as ErrorReply).Error());
-                        return;
-                    }
-
-                    source.TrySetException(new RedisException("failed parse the reply"));
-                }));
-            return source.Task;
+                    source.TrySetResult(intReply.Value);
+                    return;
+                }
+                if (reply is ErrorReply)
+                {
+                    source.TrySetException((reply as ErrorReply).Error());
+                    return;
+                }
+                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            });
         }
         /// <summary>
         /// execute multi bytes
@@ -171,27 +237,21 @@ namespace Redis.Driver
         /// <returns></returns>
         private Task<byte[][]> ExecuteMultiBytes(RedisRequest request)
         {
-            var source = new TaskCompletionSource<byte[][]>();
-            this.Send(new Request<IRedisReply>(null, null, 0, request.ToPayload(), null,
-                ex => source.TrySetException(ex),
-                reply =>
+            return this.Execute<byte[][]>(request.ToPayload(), (source, reply) =>
+            {
+                var mbReeply = reply as MultiBulkReplies;
+                if (mbReeply != null)
                 {
-                    var mbReeply = reply as MultiBulkReplies;
-                    if (mbReeply != null)
-                    {
-                        source.TrySetResult(mbReeply.Payloads);
-                        return;
-                    }
-
-                    if (reply is ErrorReply)
-                    {
-                        source.TrySetException((reply as ErrorReply).Error());
-                        return;
-                    }
-
-                    source.TrySetException(new RedisException("failed parse the reply"));
-                }));
-            return source.Task;
+                    source.TrySetResult(mbReeply.Payloads);
+                    return;
+                }
+                if (reply is ErrorReply)
+                {
+                    source.TrySetException((reply as ErrorReply).Error());
+                    return;
+                }
+                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            });
         }
         /// <summary>
         /// execute bytes
@@ -200,27 +260,32 @@ namespace Redis.Driver
         /// <returns></returns>
         private Task<byte[]> ExecuteBytes(RedisRequest request)
         {
-            var source = new TaskCompletionSource<byte[]>();
-            this.Send(new Request<IRedisReply>(null, null, 0, request.ToPayload(), null,
-                ex => source.TrySetException(ex),
-                reply =>
+            return this.Execute<byte[]>(request.ToPayload(), (source, reply) =>
+            {
+                var mbReeply = reply as BulkReplies;
+                if (mbReeply != null)
                 {
-                    var mbReeply = reply as BulkReplies;
-                    if (mbReeply != null)
-                    {
-                        source.TrySetResult(mbReeply.Payload);
-                        return;
-                    }
+                    source.TrySetResult(mbReeply.Payload);
+                    return;
+                }
+                if (reply is ErrorReply)
+                {
+                    source.TrySetException((reply as ErrorReply).Error());
+                    return;
+                }
+                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            });
+        }
+        #endregion
 
-                    if (reply is ErrorReply)
-                    {
-                        source.TrySetException((reply as ErrorReply).Error());
-                        return;
-                    }
-
-                    source.TrySetException(new RedisException("failed parse the reply"));
-                }));
-            return source.Task;
+        #region Override Methods
+        /// <summary>
+        /// initialize requestReceivingCollection
+        /// </summary>
+        /// <returns></returns>
+        protected override IRequestReceivingCollection<IRedisReply> InitializeRequestReceivingCollection()
+        {
+            return new RedisReceivingQueue(this.MillisecondsReceiveTimeout);
         }
         #endregion
     }
