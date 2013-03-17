@@ -10,8 +10,6 @@ namespace Redis.Driver
     /// </summary>
     public sealed class RedisProtocol : IProtocol<IRedisReply>
     {
-        private readonly System.Collections.Generic.Queue<string> _q = new System.Collections.Generic.Queue<string>();
-
         #region IProtocol Members
         /// <summary>
         /// find response
@@ -51,6 +49,7 @@ namespace Redis.Driver
         /// <summary>
         /// find status reply
         /// </summary>
+        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
@@ -69,6 +68,7 @@ namespace Redis.Driver
         /// <summary>
         /// find error reply
         /// </summary>
+        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
@@ -87,6 +87,7 @@ namespace Redis.Driver
         /// <summary>
         /// find integer reply
         /// </summary>
+        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
@@ -110,6 +111,7 @@ namespace Redis.Driver
         /// <summary>
         /// find bulk reply
         /// </summary>
+        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
@@ -148,6 +150,7 @@ namespace Redis.Driver
         /// <summary>
         /// find multi-bulk reply
         /// </summary>
+        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>

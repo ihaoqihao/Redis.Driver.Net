@@ -18,13 +18,15 @@ namespace Redis.Driver
         /// <param name="messageBufferSize">消息缓存区大小</param>
         /// <param name="millisecondsSendTimeout">发送超时时间</param>
         /// <param name="millisecondsReceiveTimeout">接收超时时间</param>
-        public RedisClient(int socketBufferSize, int messageBufferSize, int millisecondsSendTimeout, int millisecondsReceiveTimeout)
-            : base(null,
-            new RedisProtocol(),
-            socketBufferSize,
-            messageBufferSize,
-            millisecondsSendTimeout,
-            millisecondsReceiveTimeout)
+        public RedisClient(int socketBufferSize,
+            int messageBufferSize,
+            int millisecondsSendTimeout,
+            int millisecondsReceiveTimeout)
+            : base(new RedisProtocol(),
+                   socketBufferSize,
+                   messageBufferSize,
+                   millisecondsSendTimeout,
+                   millisecondsReceiveTimeout)
         {
         }
         #endregion
@@ -131,30 +133,6 @@ namespace Redis.Driver
 
         #region Private Methods
         /// <summary>
-<<<<<<< HEAD
-        /// exceute
-        /// </summary>
-        /// <typeparam name="TResult"></typeparam>
-        /// <param name="consistentKey"></param>
-        /// <param name="request"></param>
-        /// <param name="funcResultFactory"></param>
-        /// <param name="asyncState"></param>
-        /// <returns></returns>
-        public Task<TResult> Execute<TResult>(byte[] consistentKey, RedisRequest request,
-            Func<IRedisReply, TResult> funcResultFactory, object asyncState = null)
-        {
-            if (funcResultFactory == null)
-                throw new ArgumentNullException("funcResultFactory");
-
-            var source = new TaskCompletionSource<TResult>(asyncState);
-
-            base.Send(new Request<IRedisReply>(consistentKey, base.NextRequestSeqID(), request.ToPayload(),
-                ex => source.TrySetException(ex),
-                reply => source.TrySetResult(funcResultFactory(reply))));
-            return source.Task;
-        }
-        /// <summary>
-=======
         /// execute
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -169,8 +147,32 @@ namespace Redis.Driver
 
             var source = new TaskCompletionSource<T>();
             base.Send(new Request<IRedisReply>(base.NextRequestSeqID(), payload,
-                ex => source.TrySetException(ex), reply => callback(source, reply)));
+                ex => source.TrySetException(ex),
+                reply => callback(source, reply)));
             return source.Task;
+        }
+        /// <summary>
+        /// execute int
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private Task<int> ExecuteInt(RedisRequest request)
+        {
+            return this.Execute<int>(request.ToPayload(), (source, reply) =>
+            {
+                var intReply = reply as IntegerReply;
+                if (intReply != null)
+                {
+                    source.TrySetResult(intReply.Value);
+                    return;
+                }
+                if (reply is ErrorReply)
+                {
+                    source.TrySetException((reply as ErrorReply).Error());
+                    return;
+                }
+                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            });
         }
         /// <summary>
         /// execute status
@@ -185,41 +187,6 @@ namespace Redis.Driver
                 if (statusReply != null)
                 {
                     source.TrySetResult(statusReply.Status);
-                    return;
-                }
-                if (reply is ErrorReply)
-                {
-                    source.TrySetException((reply as ErrorReply).Error());
-                    return;
-                }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
-            });
-        }
-        /// <summary>
->>>>>>> 97f19c4c8d5c30fc486193b67645fd375e384396
-        /// execute int
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        private Task<int> ExecuteInt(RedisRequest request)
-        {
-<<<<<<< HEAD
-            return this.Execute<int>(null, request, (reply) =>
-            {
-
-            });
-            var source = new TaskCompletionSource<int>();
-            this.Send(new Request<IRedisReply>(0, request.ToPayload(), null,
-                ex => source.TrySetException(ex),
-                reply =>
-=======
-            return this.Execute<int>(request.ToPayload(), (source, reply) =>
-            {
-                var intReply = reply as IntegerReply;
-                if (intReply != null)
->>>>>>> 97f19c4c8d5c30fc486193b67645fd375e384396
-                {
-                    source.TrySetResult(intReply.Value);
                     return;
                 }
                 if (reply is ErrorReply)
@@ -275,17 +242,6 @@ namespace Redis.Driver
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));
             });
-        }
-        #endregion
-
-        #region Override Methods
-        /// <summary>
-        /// initialize requestReceivingCollection
-        /// </summary>
-        /// <returns></returns>
-        protected override IRequestReceivingCollection<IRedisReply> InitializeRequestReceivingCollection()
-        {
-            return new RedisReceivingQueue(this.MillisecondsReceiveTimeout);
         }
         #endregion
     }
