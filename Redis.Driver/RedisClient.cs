@@ -49,11 +49,12 @@ namespace Redis.Driver
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
+        /// <param name="asyncState"></param>
         /// <returns>the length of the string after the append operation.</returns>
-        Task<int> IStringCommands.Append(string key, string value)
+        Task<int> IStringCommands.Append(string key, string value, object asyncState)
         {
             return this.ExecuteInt(new RedisRequest(3).AddArgument("APPEND")
-                .AddArgument(key).AddArgument(value));
+                .AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
         /// If key already exists and is a string, 
@@ -62,11 +63,12 @@ namespace Redis.Driver
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
+        /// <param name="asyncState"></param>
         /// <returns>the length of the string after the append operation.</returns>
-        Task<int> IStringCommands.Append(string key, byte[] value)
+        Task<int> IStringCommands.Append(string key, byte[] value, object asyncState)
         {
             return this.ExecuteInt(new RedisRequest(3).AddArgument("APPEND")
-                .AddArgument(key).AddArgument(value));
+                .AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
         /// When offset is beyond the string length, 
@@ -75,11 +77,12 @@ namespace Redis.Driver
         /// </summary>
         /// <param name="key"></param>
         /// <param name="offset"></param>
+        /// <param name="asyncState"></param>
         /// <returns>Returns the bit value at offset in the string value stored at key.</returns>
-        Task<int> IStringCommands.GetBit(string key, int offset)
+        Task<int> IStringCommands.GetBit(string key, int offset, object asyncState)
         {
             return this.ExecuteInt(new RedisRequest(3).AddArgument("GETBIT")
-                .AddArgument(key).AddArgument(offset));
+                .AddArgument(key).AddArgument(offset), asyncState);
         }
         /// <summary>
         /// Returns the values of all specified keys. 
@@ -87,11 +90,12 @@ namespace Redis.Driver
         /// the special value nil is returned. Because of this, the operation never fails.
         /// </summary>
         /// <param name="keys"></param>
+        /// <param name="asyncState"></param>
         /// <returns>list of values at the specified keys.</returns>
-        Task<byte[][]> IStringCommands.Get(params string[] keys)
+        Task<byte[][]> IStringCommands.Get(string[] keys, object asyncState)
         {
             return this.ExecuteMultiBytes(new RedisRequest(keys.Length + 1).AddArgument("MGET")
-                .AddArgument(keys));
+                .AddArgument(keys), asyncState);
         }
         /// <summary>
         /// Get the value of key. 
@@ -99,11 +103,12 @@ namespace Redis.Driver
         /// An error is returned if the value stored at key is not a string, because GET only handles string values.
         /// </summary>
         /// <param name="key"></param>
+        /// <param name="asyncState"></param>
         /// <returns>the value of key, or nil when key does not exist.</returns>
-        Task<byte[]> IStringCommands.Get(string key)
+        Task<byte[]> IStringCommands.Get(string key, object asyncState)
         {
             return this.ExecuteBytes(new RedisRequest(2).AddArgument("GET")
-                .AddArgument(key));
+                .AddArgument(key), asyncState);
         }
         /// <summary>
         /// Set key to hold the string value. 
@@ -111,11 +116,12 @@ namespace Redis.Driver
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
+        /// <param name="asyncState"></param>
         /// <returns>always OK since SET can't fail.</returns>
-        Task IStringCommands.Set(string key, string value)
+        Task IStringCommands.Set(string key, string value, object asyncState)
         {
             return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET")
-                .AddArgument(key).AddArgument(value));
+                .AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
         /// Set key to hold the string value. 
@@ -123,11 +129,12 @@ namespace Redis.Driver
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
+        /// <param name="asyncState"></param>
         /// <returns>always OK since SET can't fail.</returns>
-        Task IStringCommands.Set(string key, byte[] value)
+        Task IStringCommands.Set(string key, byte[] value, object asyncState)
         {
             return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET")
-                .AddArgument(key).AddArgument(value));
+                .AddArgument(key).AddArgument(value), asyncState);
         }
         #endregion
 
@@ -138,14 +145,17 @@ namespace Redis.Driver
         /// <typeparam name="T"></typeparam>
         /// <param name="payload"></param>
         /// <param name="callback"></param>
+        /// <param name="asyncState"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">callback is null.</exception>
-        private Task<T> Execute<T>(byte[] payload, Action<TaskCompletionSource<T>, IRedisReply> callback)
+        private Task<T> Execute<T>(byte[] payload,
+            Action<TaskCompletionSource<T>, IRedisReply> callback,
+            object asyncState)
         {
             if (callback == null)
                 throw new ArgumentNullException("callback");
 
-            var source = new TaskCompletionSource<T>();
+            var source = new TaskCompletionSource<T>(asyncState);
             base.Send(new Request<IRedisReply>(base.NextRequestSeqID(), payload,
                 ex => source.TrySetException(ex),
                 reply => callback(source, reply)));
@@ -155,8 +165,9 @@ namespace Redis.Driver
         /// execute int
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<int> ExecuteInt(RedisRequest request)
+        private Task<int> ExecuteInt(RedisRequest request, object asyncState)
         {
             return this.Execute<int>(request.ToPayload(), (source, reply) =>
             {
@@ -172,14 +183,15 @@ namespace Redis.Driver
                     return;
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));
-            });
+            }, asyncState);
         }
         /// <summary>
         /// execute status
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<string> ExecuteStatus(RedisRequest request)
+        private Task<string> ExecuteStatus(RedisRequest request, object asyncState)
         {
             return this.Execute<string>(request.ToPayload(), (source, reply) =>
             {
@@ -195,14 +207,15 @@ namespace Redis.Driver
                     return;
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));
-            });
+            }, asyncState);
         }
         /// <summary>
         /// execute multi bytes
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<byte[][]> ExecuteMultiBytes(RedisRequest request)
+        private Task<byte[][]> ExecuteMultiBytes(RedisRequest request, object asyncState)
         {
             return this.Execute<byte[][]>(request.ToPayload(), (source, reply) =>
             {
@@ -218,14 +231,15 @@ namespace Redis.Driver
                     return;
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));
-            });
+            }, asyncState);
         }
         /// <summary>
         /// execute bytes
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<byte[]> ExecuteBytes(RedisRequest request)
+        private Task<byte[]> ExecuteBytes(RedisRequest request, object asyncState)
         {
             return this.Execute<byte[]>(request.ToPayload(), (source, reply) =>
             {
@@ -241,7 +255,7 @@ namespace Redis.Driver
                     return;
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));
-            });
+            }, asyncState);
         }
         #endregion
     }
