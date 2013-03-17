@@ -12,7 +12,7 @@ namespace Tests
         {
             string reply = "+OK\r\n";
             int readed;
-            var objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            var objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.AreEqual(readed, 5);
             Assert.IsNotNull(objReply);
             Assert.IsTrue(objReply is Redis.Driver.StatusReply);
@@ -24,7 +24,7 @@ namespace Tests
         {
             string reply = "-(error) ERR unknown command 'INC'\r\n";
             int readed;
-            var objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            var objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.AreEqual(readed, 36);
             Assert.IsNotNull(objReply);
             Assert.IsTrue(objReply is Redis.Driver.ErrorReply);
@@ -36,14 +36,14 @@ namespace Tests
         {
             string reply = ":1000\r\n";
             int readed;
-            var objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            var objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.AreEqual(readed, 7);
             Assert.IsNotNull(objReply);
             Assert.IsTrue(objReply is Redis.Driver.IntegerReply);
             Assert.AreEqual(1000, (objReply as Redis.Driver.IntegerReply).Value);
 
             reply = ":-1\r\n";
-            objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.AreEqual(readed, 5);
             Assert.IsNotNull(objReply);
             Assert.IsTrue(objReply is Redis.Driver.IntegerReply);
@@ -55,14 +55,14 @@ namespace Tests
         {
             string reply = "$7\r\nmyvalue\r\n";
             int readed;
-            var objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            var objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.IsNotNull(objReply);
             Assert.AreEqual(readed, 13);
             Assert.IsTrue(objReply is Redis.Driver.BulkReplies);
             Assert.AreEqual("myvalue", Encoding.UTF8.GetString((objReply as Redis.Driver.BulkReplies).Payload));
 
             reply = "$-1\r\n";
-            objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.IsNotNull(objReply);
             Assert.AreEqual(readed, 5);
             Assert.IsTrue(objReply is Redis.Driver.BulkReplies);
@@ -74,7 +74,7 @@ namespace Tests
         {
             string reply = "*3\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n";
             int readed;
-            var objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            var objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.IsNotNull(objReply);
             Assert.AreEqual(readed, 27);
             Assert.IsTrue(objReply is Redis.Driver.MultiBulkReplies);
@@ -89,7 +89,7 @@ namespace Tests
             }
 
             reply = "*-1\r\n";
-            objReply = new Redis.Driver.RedisProtocol().FindResponse(Encoding.UTF8.GetBytes(reply), out readed);
+            objReply = new Redis.Driver.RedisProtocol().FindResponse(null, Encoding.UTF8.GetBytes(reply), out readed);
             Assert.IsNotNull(objReply);
             Assert.AreEqual(readed, 5);
             Assert.IsTrue(objReply is Redis.Driver.MultiBulkReplies);

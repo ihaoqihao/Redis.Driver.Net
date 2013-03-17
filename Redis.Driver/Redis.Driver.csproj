@@ -47,7 +47,9 @@
     <Compile Include="Config\EndpointCollection.cs" />
     <Compile Include="Config\EndpointConfig.cs" />
     <Compile Include="Config\RedisConfigSection.cs" />
+    <Compile Include="DefaultRedisReplyList.cs" />
     <Compile Include="IKeyCommands.cs" />
+    <Compile Include="IRedisReplyList.cs" />
     <Compile Include="IStringCommands.cs" />
     <Compile Include="RedisReply.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

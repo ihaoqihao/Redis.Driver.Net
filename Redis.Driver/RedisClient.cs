@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Sodao.FastSocket.Client;
+using Sodao.FastSocket.SocketBase;
 
 namespace Redis.Driver
 {
@@ -38,6 +39,40 @@ namespace Redis.Driver
         public IStringCommands Strings
         {
             get { return this; }
+        }
+        #endregion
+
+        #region Override Methods
+        /// <summary>
+        /// OnConnected
+        /// </summary>
+        /// <param name="connection"></param>
+        protected override void OnConnected(IConnection connection)
+        {
+            connection.UserData = new DefaultRedisReplyList();
+            base.OnConnected(connection);
+        }
+        /// <summary>
+        /// OnStartSending
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="packet"></param>
+        protected override void OnStartSending(IConnection connection, Packet packet)
+        {
+            (connection.UserData as IRedisReplyList).Enqueue((packet as Request<IRedisReply>).SeqID);
+            base.OnStartSending(connection, packet);
+        }
+        /// <summary>
+        /// OnSendCallback
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="e"></param>
+        protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
+        {
+            if (e.Status == SendCallbackStatus.Failed)
+                (connection.UserData as IRedisReplyList).Pull();
+
+            base.OnSendCallback(connection, e);
         }
         #endregion
 
@@ -92,8 +127,12 @@ namespace Redis.Driver
         /// <param name="keys"></param>
         /// <param name="asyncState"></param>
         /// <returns>list of values at the specified keys.</returns>
+        /// <exception cref="ArgumentNullException">keys is null or empty.</exception>
         Task<byte[][]> IStringCommands.Get(string[] keys, object asyncState)
         {
+            if (keys == null || keys.Length == 0)
+                throw new ArgumentNullException("keys");
+
             return this.ExecuteMultiBytes(new RedisRequest(keys.Length + 1).AddArgument("MGET")
                 .AddArgument(keys), asyncState);
         }

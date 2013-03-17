@@ -27,17 +27,17 @@ namespace Redis.Driver
                 return null;
             }
 
-            switch ((char)buffer[0])
+            switch (buffer[0])
             {
-                case '+':
+                case 43://'+'
                     return this.FindStatus(connection, buffer, out readed);
-                case '-':
+                case 45://'-'
                     return this.FindError(connection, buffer, out readed);
-                case ':':
+                case 58://':'
                     return this.FindInteger(connection, buffer, out readed);
-                case '$':
+                case 36://'$'
                     return this.FindBulk(connection, buffer, out readed);
-                case '*':
+                case 42://'*'
                     return this.FindMultiBulk(connection, buffer, out readed);
                 default:
                     throw new BadProtocolException();
@@ -46,6 +46,15 @@ namespace Redis.Driver
         #endregion
 
         #region Private Methods
+        /// <summary>
+        /// get seqID
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <returns></returns>
+        static private int GetSeqID(IConnection connection)
+        {
+            return (connection.UserData as IRedisReplyList).Dequeue();
+        }
         /// <summary>
         /// find status reply
         /// </summary>
@@ -59,7 +68,7 @@ namespace Redis.Driver
                 if (buffer[i] == 13 && i + 1 < l && buffer[i + 1] == 10)
                 {
                     readed = i + 2;
-                    return new StatusReply(-1, Encoding.UTF8.GetString(buffer, 1, i - 1));
+                    return new StatusReply(GetSeqID(connection), Encoding.UTF8.GetString(buffer, 1, i - 1));
                 }
 
             readed = 0;
@@ -78,7 +87,7 @@ namespace Redis.Driver
                 if (buffer[i] == 13 && i + 1 < l && buffer[i + 1] == 10)
                 {
                     readed = i + 2;
-                    return new ErrorReply(-1, Encoding.UTF8.GetString(buffer, 1, i - 1));
+                    return new ErrorReply(GetSeqID(connection), Encoding.UTF8.GetString(buffer, 1, i - 1));
                 }
 
             readed = 0;
@@ -106,7 +115,7 @@ namespace Redis.Driver
                 readed = 0;
                 return null;
             }
-            return new IntegerReply(-1, prefixed.Value);
+            return new IntegerReply(GetSeqID(connection), prefixed.Value);
         }
         /// <summary>
         /// find bulk reply
@@ -133,7 +142,7 @@ namespace Redis.Driver
                     readed = 0;
                     return null;
                 }
-                return new BulkReplies(-1, null);
+                return new BulkReplies(GetSeqID(connection), null);
             }
 
             readed = prefixed.OverIndex + prefixed.Value + 3;
@@ -141,7 +150,7 @@ namespace Redis.Driver
             {
                 var payload = new byte[prefixed.Value];
                 Buffer.BlockCopy(buffer, prefixed.OverIndex + 1, payload, 0, prefixed.Value);
-                return new BulkReplies(-1, payload);
+                return new BulkReplies(GetSeqID(connection), payload);
             }
 
             readed = 0;
@@ -171,7 +180,7 @@ namespace Redis.Driver
                     readed = 0;
                     return null;
                 }
-                return new MultiBulkReplies(-1, null);
+                return new MultiBulkReplies(GetSeqID(connection), null);
             }
 
             var arrBulk = new PrefixedLength[prefixed.Value];
@@ -212,7 +221,7 @@ namespace Redis.Driver
                     arrPayloads[i] = payload;
                 }
             }
-            return new MultiBulkReplies(-1, arrPayloads);
+            return new MultiBulkReplies(GetSeqID(connection), arrPayloads);
         }
         #endregion
 

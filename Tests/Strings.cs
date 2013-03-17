@@ -29,7 +29,7 @@ namespace Tests
         public void Mget()
         {
             var client = Redis.Driver.RedisClientFactory.Get("test1");
-            client.Strings.Get("a", "b", "c").Wait();
+            client.Strings.Get(new string[] { "a", "b", "c" }).Wait();
         }
         [Test]
         public void Get()

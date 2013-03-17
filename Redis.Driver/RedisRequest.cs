@@ -26,7 +26,7 @@ namespace Redis.Driver
 
             this._stream = new MemoryStream();
             this._stream.WriteByte(42);//'*'
-            Write(this._stream, argNumber);
+            WriteRedisInteger(this._stream, argNumber);
             this._stream.WriteByte(13);
             this._stream.WriteByte(10);
         }
@@ -46,7 +46,7 @@ namespace Redis.Driver
 
             var bytes = Encoding.UTF8.GetBytes(value);
             this._stream.WriteByte(36);//'$'
-            Write(this._stream, bytes.Length);
+            WriteRedisInteger(this._stream, bytes.Length);
             this._stream.WriteByte(13);
             this._stream.WriteByte(10);
             this._stream.Write(bytes, 0, bytes.Length);
@@ -83,7 +83,7 @@ namespace Redis.Driver
                 throw new ArgumentNullException("value");
 
             this._stream.WriteByte(36);//'$'
-            Write(this._stream, value.Length);
+            WriteRedisInteger(this._stream, value.Length);
             this._stream.WriteByte(13);
             this._stream.WriteByte(10);
             this._stream.Write(value, 0, value.Length);
@@ -119,7 +119,7 @@ namespace Redis.Driver
             else
             {
                 var bytes = Encoding.ASCII.GetBytes(value.ToString());
-                Write(this._stream, bytes.Length);
+                WriteRedisInteger(this._stream, bytes.Length);
                 this._stream.WriteByte(13);
                 this._stream.WriteByte(10);
                 this._stream.Write(bytes, 0, bytes.Length);
@@ -146,11 +146,11 @@ namespace Redis.Driver
 
         #region Private Methods
         /// <summary>
-        /// write interger
+        /// write redis interger
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="value"></param>
-        static private void Write(MemoryStream stream, int value)
+        static private void WriteRedisInteger(MemoryStream stream, int value)
         {
             if (value >= 0 && value <= 9)
                 stream.WriteByte((byte)(48 + value));//'0'+value
