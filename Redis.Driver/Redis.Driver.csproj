@@ -49,6 +49,7 @@
     <Compile Include="Config\RedisConfigSection.cs" />
     <Compile Include="IKeyCommands.cs" />
     <Compile Include="IStringCommands.cs" />
+    <Compile Include="RedisReceivingQueue.cs" />
     <Compile Include="RedisReply.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RedisClient.cs" />

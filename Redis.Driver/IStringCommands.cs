@@ -51,5 +51,21 @@ namespace Redis.Driver
         /// <param name="key"></param>
         /// <returns>the value of key, or nil when key does not exist.</returns>
         Task<byte[]> Get(string key);
+        /// <summary>
+        /// Set key to hold the string value. 
+        /// If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>always OK since SET can't fail.</returns>
+        Task Set(string key, string value);
+        /// <summary>
+        /// Set key to hold the string value. 
+        /// If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>always OK since SET can't fail.</returns>
+        Task Set(string key, byte[] value);
     }
 }
