@@ -7,7 +7,7 @@ namespace Redis.Driver
     /// <summary>
     /// redis client
     /// </summary>
-    public sealed class RedisClient : SocketClient<IRedisReply>,
+    public sealed class RedisClient : BaseSocketClient<IRedisReply>,
         IStringCommands
     {
         #region Constructors
@@ -110,14 +110,40 @@ namespace Redis.Driver
 
         #region Private Methods
         /// <summary>
+        /// exceute
+        /// </summary>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="consistentKey"></param>
+        /// <param name="request"></param>
+        /// <param name="funcResultFactory"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task<TResult> Execute<TResult>(byte[] consistentKey, RedisRequest request,
+            Func<IRedisReply, TResult> funcResultFactory, object asyncState = null)
+        {
+            if (funcResultFactory == null)
+                throw new ArgumentNullException("funcResultFactory");
+
+            var source = new TaskCompletionSource<TResult>(asyncState);
+
+            base.Send(new Request<IRedisReply>(consistentKey, base.NextRequestSeqID(), request.ToPayload(),
+                ex => source.TrySetException(ex),
+                reply => source.TrySetResult(funcResultFactory(reply))));
+            return source.Task;
+        }
+        /// <summary>
         /// execute int
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         private Task<int> ExecuteInt(RedisRequest request)
         {
+            return this.Execute<int>(null, request, (reply) =>
+            {
+
+            });
             var source = new TaskCompletionSource<int>();
-            this.Send(new Request<IRedisReply>(null, null, 0, request.ToPayload(), null,
+            this.Send(new Request<IRedisReply>(0, request.ToPayload(), null,
                 ex => source.TrySetException(ex),
                 reply =>
                 {

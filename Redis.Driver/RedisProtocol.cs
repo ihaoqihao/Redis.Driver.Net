@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using Sodao.FastSocket.Client.Protocol;
+using Sodao.FastSocket.SocketBase;
 
 namespace Redis.Driver
 {
@@ -13,11 +14,12 @@ namespace Redis.Driver
         /// <summary>
         /// find response
         /// </summary>
+        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
         /// <exception cref="BadProtocolException">未能识别的协议</exception>
-        public IRedisReply FindResponse(byte[] buffer, out int readed)
+        public IRedisReply FindResponse(IConnection connection, byte[] buffer, out int readed)
         {
             if (buffer == null || buffer.Length == 0)
             {
@@ -28,15 +30,15 @@ namespace Redis.Driver
             switch ((char)buffer[0])
             {
                 case '+':
-                    return this.FindStatus(buffer, out readed);
+                    return this.FindStatus(connection, buffer, out readed);
                 case '-':
-                    return this.FindError(buffer, out readed);
+                    return this.FindError(connection, buffer, out readed);
                 case ':':
-                    return this.FindInteger(buffer, out readed);
+                    return this.FindInteger(connection, buffer, out readed);
                 case '$':
-                    return this.FindBulk(buffer, out readed);
+                    return this.FindBulk(connection, buffer, out readed);
                 case '*':
-                    return this.FindMultiBulk(buffer, out readed);
+                    return this.FindMultiBulk(connection, buffer, out readed);
                 default:
                     throw new BadProtocolException();
             }
@@ -50,13 +52,13 @@ namespace Redis.Driver
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
-        private StatusReply FindStatus(byte[] buffer, out int readed)
+        private StatusReply FindStatus(IConnection connection, byte[] buffer, out int readed)
         {
             for (int i = 1, l = buffer.Length; i < l; i++)
                 if (buffer[i] == 13 && i + 1 < l && buffer[i + 1] == 10)
                 {
                     readed = i + 2;
-                    return new StatusReply(Encoding.UTF8.GetString(buffer, 1, i - 1));
+                    return new StatusReply(-1, Encoding.UTF8.GetString(buffer, 1, i - 1));
                 }
 
             readed = 0;
@@ -68,13 +70,13 @@ namespace Redis.Driver
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
-        private ErrorReply FindError(byte[] buffer, out int readed)
+        private ErrorReply FindError(IConnection connection, byte[] buffer, out int readed)
         {
             for (int i = 1, l = buffer.Length; i < l; i++)
                 if (buffer[i] == 13 && i + 1 < l && buffer[i + 1] == 10)
                 {
                     readed = i + 2;
-                    return new ErrorReply(Encoding.UTF8.GetString(buffer, 1, i - 1));
+                    return new ErrorReply(-1, Encoding.UTF8.GetString(buffer, 1, i - 1));
                 }
 
             readed = 0;
@@ -86,7 +88,7 @@ namespace Redis.Driver
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
-        private IntegerReply FindInteger(byte[] buffer, out int readed)
+        private IntegerReply FindInteger(IConnection connection, byte[] buffer, out int readed)
         {
             var prefixed = GetPrefixedLength(buffer, 0);
             if (prefixed.OverIndex == -1)
@@ -101,7 +103,7 @@ namespace Redis.Driver
                 readed = 0;
                 return null;
             }
-            return new IntegerReply(prefixed.Value);
+            return new IntegerReply(-1, prefixed.Value);
         }
         /// <summary>
         /// find bulk reply
@@ -109,7 +111,7 @@ namespace Redis.Driver
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
-        private BulkReplies FindBulk(byte[] buffer, out int readed)
+        private BulkReplies FindBulk(IConnection connection, byte[] buffer, out int readed)
         {
             //find bulk length
             var prefixed = GetPrefixedLength(buffer, 0);
@@ -127,7 +129,7 @@ namespace Redis.Driver
                     readed = 0;
                     return null;
                 }
-                return new BulkReplies(null);
+                return new BulkReplies(-1, null);
             }
 
             readed = prefixed.OverIndex + prefixed.Value + 3;
@@ -135,7 +137,7 @@ namespace Redis.Driver
             {
                 var payload = new byte[prefixed.Value];
                 Buffer.BlockCopy(buffer, prefixed.OverIndex + 1, payload, 0, prefixed.Value);
-                return new BulkReplies(payload);
+                return new BulkReplies(-1, payload);
             }
 
             readed = 0;
@@ -147,7 +149,7 @@ namespace Redis.Driver
         /// <param name="buffer"></param>
         /// <param name="readed"></param>
         /// <returns></returns>
-        private MultiBulkReplies FindMultiBulk(byte[] buffer, out int readed)
+        private MultiBulkReplies FindMultiBulk(IConnection connection, byte[] buffer, out int readed)
         {
             var prefixed = GetPrefixedLength(buffer, 0);
             if (prefixed.OverIndex == -1)
@@ -164,7 +166,7 @@ namespace Redis.Driver
                     readed = 0;
                     return null;
                 }
-                return new MultiBulkReplies(null);
+                return new MultiBulkReplies(-1, null);
             }
 
             var arrBulk = new PrefixedLength[prefixed.Value];
@@ -205,7 +207,7 @@ namespace Redis.Driver
                     arrPayloads[i] = payload;
                 }
             }
-            return new MultiBulkReplies(arrPayloads);
+            return new MultiBulkReplies(-1, arrPayloads);
         }
         #endregion
 

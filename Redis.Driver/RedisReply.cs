@@ -10,11 +10,38 @@ namespace Redis.Driver
     {
     }
 
+    #region BaseReply
+    /// <summary>
+    /// base redis reply
+    /// </summary>
+    public abstract class BaseReply : IRedisReply
+    {
+        private int _seqID;
+
+        /// <summary>
+        /// new
+        /// </summary>
+        /// <param name="seqID"></param>
+        public BaseReply(int seqID)
+        {
+            this._seqID = seqID;
+        }
+
+        /// <summary>
+        /// get seqID
+        /// </summary>
+        public int SeqID
+        {
+            get { return this._seqID; }
+        }
+    }
+    #endregion
+
     #region Error reply
     /// <summary>
     /// error reply
     /// </summary>
-    public sealed class ErrorReply : IRedisReply
+    public sealed class ErrorReply : BaseReply
     {
         #region Public Members
         /// <summary>
@@ -27,9 +54,11 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
+        /// <param name="seqID"></param>
         /// <param name="errorMessage"></param>
         /// <exception cref="ArgumentNullException">errorMessage is null or empty.</exception>
-        public ErrorReply(string errorMessage)
+        public ErrorReply(int seqID, string errorMessage)
+            : base(seqID)
         {
             if (string.IsNullOrEmpty(errorMessage))
                 throw new ArgumentNullException("errorMessage");
@@ -55,7 +84,7 @@ namespace Redis.Driver
     /// <summary>
     /// Iinteger reply
     /// </summary>
-    public sealed class IntegerReply : IRedisReply
+    public sealed class IntegerReply : BaseReply
     {
         #region Public Members
         /// <summary>
@@ -68,8 +97,10 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
+        /// <param name="seqID"></param>
         /// <param name="value"></param>
-        public IntegerReply(int value)
+        public IntegerReply(int seqID, int value)
+            : base(seqID)
         {
             this.Value = value;
         }
@@ -81,7 +112,7 @@ namespace Redis.Driver
     /// <summary>
     /// status reply
     /// </summary>
-    public sealed class StatusReply : IRedisReply
+    public sealed class StatusReply : BaseReply
     {
         #region Public Members
         /// <summary>
@@ -94,9 +125,11 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
+        /// <param name="seqID"></param>
         /// <param name="status"></param>
         /// <exception cref="ArgumentNullException">status is null or empty.</exception>
-        public StatusReply(string status)
+        public StatusReply(int seqID, string status)
+            : base(seqID)
         {
             if (string.IsNullOrEmpty(status))
                 throw new ArgumentNullException("status");
@@ -111,7 +144,7 @@ namespace Redis.Driver
     /// <summary>
     /// bulk replies
     /// </summary>
-    public sealed class BulkReplies : IRedisReply
+    public sealed class BulkReplies : BaseReply
     {
         #region Public Members
         /// <summary>
@@ -124,8 +157,10 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
+        /// <param name="seqID"></param>
         /// <param name="payload"></param>
-        public BulkReplies(byte[] payload)
+        public BulkReplies(int seqID, byte[] payload)
+            : base(seqID)
         {
             this.Payload = payload;
         }
@@ -137,7 +172,7 @@ namespace Redis.Driver
     /// <summary>
     /// Multi-bulk replies
     /// </summary>
-    public sealed class MultiBulkReplies : IRedisReply
+    public sealed class MultiBulkReplies : BaseReply
     {
         #region Public Members
         /// <summary>
@@ -150,8 +185,10 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
+        /// <param name="seqID"></param>
         /// <param name="payloads"></param>
-        public MultiBulkReplies(byte[][] payloads)
+        public MultiBulkReplies(int seqID, byte[][] payloads)
+            : base(seqID)
         {
             this.Payloads = payloads;
         }
