@@ -78,8 +78,9 @@ namespace Tests
         [Test]
         public void MultiBulkReply()
         {
-            string reply = "@@@@@@@@@@*3\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n~~!!!!!!!!!!!!!!!!";
-            var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(reply), 10, 27);
+            //string reply = "@@@@@@@@@@*3\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n~~!!!!!!!!!!!!!!!!";
+            string reply = "*3\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n";
+            var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(reply), 0, 27);
             int readed;
             var objReply = new Redis.Driver.RedisProtocol().FindResponse(null, buffer, out readed);
             Assert.IsNotNull(objReply);

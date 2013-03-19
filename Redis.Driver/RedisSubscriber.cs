@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text;
+using System.Threading;
 using Sodao.FastSocket.Client;
 using Sodao.FastSocket.SocketBase;
 using Sodao.FastSocket.SocketBase.Utils;
@@ -14,10 +16,11 @@ namespace Redis.Driver
     {
         #region Private Members
         private readonly ISocketConnector _connector = null;
+        private readonly RedisProtocol _protocol = new RedisProtocol();
         private IConnection _currentConnection = null;
 
-        private readonly HashSet<string> _channels = new HashSet<string>();
-        private readonly HashSet<string> _patterns = new HashSet<string>();
+        private readonly HashSet<string> _setChannels = new HashSet<string>();
+        private readonly HashSet<string> _setPatterns = new HashSet<string>();
         #endregion
 
         #region Events
@@ -52,7 +55,6 @@ namespace Redis.Driver
         /// <param name="connection"></param>
         private void Connector_Connected(ISocketConnector connector, IConnection connection)
         {
-            this._currentConnection = connection;
             base.RegisterConnection(connection);
         }
         /// <summary>
@@ -64,9 +66,6 @@ namespace Redis.Driver
             //延时重连
             TaskEx.Delay(3000, this._connector.BeginConnect);
         }
-        #endregion
-
-        #region Private Methods
         /// <summary>
         /// fire Listener
         /// </summary>
@@ -76,6 +75,44 @@ namespace Redis.Driver
         {
             if (this.Listener != null)
                 this.Listener(channel, payload);
+        }
+        /// <summary>
+        /// subscribe channel
+        /// </summary>
+        /// <param name="channels"></param>
+        private void SubscribeInternal(string[] channels)
+        {
+            if (channels == null || channels.Length == 0)
+                return;
+
+            var connection = this._currentConnection;
+            if (connection == null)
+                return;
+
+            var r = new RedisRequest(channels.Length + 1).AddArgument("SUBSCRIBE");
+            foreach (var channel in channels)
+                r.AddArgument(channel);
+
+            connection.BeginSend(new Packet(r.ToPayload()));
+        }
+        /// <summary>
+        /// pattern subscribe
+        /// </summary>
+        /// <param name="patterns"></param>
+        private void PatternSubscribeInternal(string[] patterns)
+        {
+            if (patterns == null || patterns.Length == 0)
+                return;
+
+            var connection = this._currentConnection;
+            if (connection == null)
+                return;
+
+            var r = new RedisRequest(patterns.Length + 1).AddArgument("PSUBSCRIBE");
+            foreach (var pattern in patterns)
+                r.AddArgument(pattern);
+
+            connection.BeginSend(new Packet(r.ToPayload()));
         }
         #endregion
 
@@ -88,6 +125,98 @@ namespace Redis.Driver
         protected override void OnMessageReceived(IConnection connection, MessageReceivedEventArgs e)
         {
             base.OnMessageReceived(connection, e);
+
+            Console.WriteLine(Encoding.UTF8.GetString(e.Buffer.Array, e.Buffer.Offset, e.Buffer.Count));
+            e.SetReadlength(e.Buffer.Count);
+            return;
+
+            int readLength;
+            IRedisReply reply = null;
+            try
+            {
+                reply = this._protocol.FindResponse(connection, e.Buffer, out readLength);
+            }
+            catch (Exception ex)
+            {
+                connection.BeginDisconnect(ex);
+                readLength = e.Buffer.Count;
+                return;
+            }
+
+            if (reply != null && reply is MultiBulkReplies)
+            {
+                var objMult = reply as MultiBulkReplies;
+                if (objMult.Payloads == null && objMult.Payloads.Length != 3)
+                    return;
+
+                ThreadPool.QueueUserWorkItem(c =>
+                {
+                    try
+                    {
+                        if (Encoding.UTF8.GetString(objMult.Payloads[0]) != "message")
+                            return;
+
+                        this.OnListener(Encoding.UTF8.GetString(objMult.Payloads[1]), objMult.Payloads[2]);
+                    }
+                    catch (Exception ex) { Console.WriteLine(ex); }
+                });
+            }
+
+            e.SetReadlength(readLength);
+        }
+        /// <summary>
+        /// OnSendCallback
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="e"></param>
+        protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
+        {
+            base.OnSendCallback(connection, e);
+            //重发
+            if (e.Status != SendCallbackStatus.Success && connection.Active)
+                connection.BeginSend(e.Packet);
+        }
+        /// <summary>
+        /// OnConnected
+        /// </summary>
+        /// <param name="connection"></param>
+        protected override void OnConnected(IConnection connection)
+        {
+            base.OnConnected(connection);
+
+            this._currentConnection = connection;
+            connection.BeginReceive();
+
+            string[] channels = null;
+            string[] patterns = null;
+            lock (this)
+            {
+                if (this._setChannels.Count > 0)
+                {
+                    channels = new string[this._setChannels.Count];
+                    this._setChannels.CopyTo(channels);
+                }
+
+                if (this._setPatterns.Count > 0)
+                {
+                    patterns = new string[this._setPatterns.Count];
+                    this._setPatterns.CopyTo(patterns);
+                }
+            }
+            this.SubscribeInternal(channels);
+            this.PatternSubscribeInternal(patterns);
+        }
+        /// <summary>
+        /// OnDisconnected
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="ex"></param>
+        protected override void OnDisconnected(IConnection connection, Exception ex)
+        {
+            base.OnDisconnected(connection, ex);
+
+            this._currentConnection = null;
+            this._connector.BeginConnect();
         }
         #endregion
 
@@ -101,8 +230,12 @@ namespace Redis.Driver
             if (channels == null || channels.Length == 0)
                 return;
 
-            foreach (var c in channels)
-                this._channels.Add(c);
+            lock (this)
+            {
+                foreach (var c in channels)
+                    this._setChannels.Add(c);
+            }
+            this.SubscribeInternal(channels);
         }
         /// <summary>
         /// pattern subscribe
@@ -113,8 +246,12 @@ namespace Redis.Driver
             if (patterns == null || patterns.Length == 0)
                 return;
 
-            foreach (var p in patterns)
-                this._patterns.Add(p);
+            lock (this)
+            {
+                foreach (var p in patterns)
+                    this._setPatterns.Add(p);
+            }
+            this.PatternSubscribeInternal(patterns);
         }
         #endregion
     }
