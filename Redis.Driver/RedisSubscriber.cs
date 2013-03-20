@@ -96,6 +96,25 @@ namespace Redis.Driver
             connection.BeginSend(new Packet(r.ToPayload()));
         }
         /// <summary>
+        /// unsubscribe channel
+        /// </summary>
+        /// <param name="channels"></param>
+        private void UnSubscribeInternal(string[] channels)
+        {
+            if (channels == null || channels.Length == 0)
+                return;
+
+            var connection = this._currentConnection;
+            if (connection == null)
+                return;
+
+            var r = new RedisRequest(channels.Length + 1).AddArgument("UNSUBSCRIBE");
+            foreach (var channel in channels)
+                r.AddArgument(channel);
+
+            connection.BeginSend(new Packet(r.ToPayload()));
+        }
+        /// <summary>
         /// pattern subscribe
         /// </summary>
         /// <param name="patterns"></param>
@@ -114,6 +133,25 @@ namespace Redis.Driver
 
             connection.BeginSend(new Packet(r.ToPayload()));
         }
+        /// <summary>
+        /// unsubscribe pattern
+        /// </summary>
+        /// <param name="patterns"></param>
+        private void UnPatternSubscribeInternal(string[] patterns)
+        {
+            if (patterns == null || patterns.Length == 0)
+                return;
+
+            var connection = this._currentConnection;
+            if (connection == null)
+                return;
+
+            var r = new RedisRequest(patterns.Length + 1).AddArgument("PUNSUBSCRIBE");
+            foreach (var pattern in patterns)
+                r.AddArgument(pattern);
+
+            connection.BeginSend(new Packet(r.ToPayload()));
+        }
         #endregion
 
         #region Override Methods
@@ -126,41 +164,47 @@ namespace Redis.Driver
         {
             base.OnMessageReceived(connection, e);
 
-            Console.WriteLine(Encoding.UTF8.GetString(e.Buffer.Array, e.Buffer.Offset, e.Buffer.Count));
-            e.SetReadlength(e.Buffer.Count);
-            return;
-
             int readLength;
-            IRedisReply reply = null;
+            RedisResponse response = null;
             try
             {
-                reply = this._protocol.FindResponse(connection, e.Buffer, out readLength);
+                response = this._protocol.FindResponse(connection, e.Buffer, out readLength);
             }
             catch (Exception ex)
             {
                 connection.BeginDisconnect(ex);
-                readLength = e.Buffer.Count;
+                e.SetReadlength(e.Buffer.Count);
                 return;
             }
 
-            if (reply != null && reply is MultiBulkReplies)
-            {
-                var objMult = reply as MultiBulkReplies;
-                if (objMult.Payloads == null && objMult.Payloads.Length != 3)
-                    return;
-
+            if (response != null)
                 ThreadPool.QueueUserWorkItem(c =>
                 {
+                    var objMulti = response.Reply as MultiBulkReplies;
+                    if (objMulti == null || objMulti.Replies == null || objMulti.Replies.Length != 3)
+                        return;
+
+                    var objFlagBulk = objMulti.Replies[0] as BulkReplies;
+                    if (objFlagBulk == null || objFlagBulk.Payload == null)
+                        return;
+
                     try
                     {
-                        if (Encoding.UTF8.GetString(objMult.Payloads[0]) != "message")
+                        if (Encoding.UTF8.GetString(objFlagBulk.Payload) != "message")
                             return;
 
-                        this.OnListener(Encoding.UTF8.GetString(objMult.Payloads[1]), objMult.Payloads[2]);
+                        var objChannelNameBulk = objMulti.Replies[1] as BulkReplies;
+                        if (objChannelNameBulk == null || objChannelNameBulk.Payload == null)
+                            return;
+
+                        var objMessageBulk = objMulti.Replies[2] as BulkReplies;
+                        if (objMessageBulk == null || objMessageBulk.Payload == null)
+                            return;
+
+                        this.OnListener(Encoding.UTF8.GetString(objChannelNameBulk.Payload), objMessageBulk.Payload);
                     }
-                    catch (Exception ex) { Console.WriteLine(ex); }
+                    catch { }
                 });
-            }
 
             e.SetReadlength(readLength);
         }
@@ -238,6 +282,22 @@ namespace Redis.Driver
             this.SubscribeInternal(channels);
         }
         /// <summary>
+        /// unsubscribe channel
+        /// </summary>
+        /// <param name="channels"></param>
+        public void UnSubscribe(params string[] channels)
+        {
+            if (channels == null || channels.Length == 0)
+                return;
+
+            lock (this)
+            {
+                foreach (var c in channels)
+                    this._setChannels.Remove(c);
+            }
+            this.UnSubscribeInternal(channels);
+        }
+        /// <summary>
         /// pattern subscribe
         /// </summary>
         /// <param name="patterns"></param>
@@ -252,6 +312,22 @@ namespace Redis.Driver
                     this._setPatterns.Add(p);
             }
             this.PatternSubscribeInternal(patterns);
+        }
+        /// <summary>
+        /// unsubscribe pattern
+        /// </summary>
+        /// <param name="patterns"></param>
+        public void UnPatternSubscribe(params string[] patterns)
+        {
+            if (patterns == null || patterns.Length == 0)
+                return;
+
+            lock (this)
+            {
+                foreach (var p in patterns)
+                    this._setPatterns.Remove(p);
+            }
+            this.UnPatternSubscribeInternal(patterns);
         }
         #endregion
     }
