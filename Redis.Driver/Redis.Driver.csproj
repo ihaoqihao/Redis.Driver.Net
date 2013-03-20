@@ -58,6 +58,7 @@
     <Compile Include="RedisException.cs" />
     <Compile Include="RedisProtocol.cs" />
     <Compile Include="RedisRequest.cs" />
+    <Compile Include="RedisResponse.cs" />
     <Compile Include="RedisSubscriber.cs" />
   </ItemGroup>
   <ItemGroup>

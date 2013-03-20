@@ -8,7 +8,7 @@ namespace Redis.Driver
     /// <summary>
     /// redis client
     /// </summary>
-    public sealed class RedisClient : BaseSocketClient<IRedisReply>,
+    public sealed class RedisClient : BaseSocketClient<RedisResponse>,
         IStringCommands
     {
         #region Constructors
@@ -59,7 +59,7 @@ namespace Redis.Driver
         /// <param name="packet"></param>
         protected override void OnStartSending(IConnection connection, Packet packet)
         {
-            (connection.UserData as IRedisReplyQueue).Enqueue((packet as Request<IRedisReply>).SeqID);
+            (connection.UserData as IRedisReplyQueue).Enqueue((packet as Request<RedisResponse>).SeqID);
             base.OnStartSending(connection, packet);
         }
         /// <summary>
@@ -188,16 +188,16 @@ namespace Redis.Driver
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">callback is null.</exception>
         private Task<T> Execute<T>(byte[] payload,
-            Action<TaskCompletionSource<T>, IRedisReply> callback,
+            Action<TaskCompletionSource<T>, RedisResponse> callback,
             object asyncState)
         {
             if (callback == null)
                 throw new ArgumentNullException("callback");
 
             var source = new TaskCompletionSource<T>(asyncState);
-            base.Send(new Request<IRedisReply>(base.NextRequestSeqID(), payload,
+            base.Send(new Request<RedisResponse>(base.NextRequestSeqID(), payload,
                 ex => source.TrySetException(ex),
-                reply => callback(source, reply)));
+                response => callback(source, response)));
             return source.Task;
         }
         /// <summary>
@@ -208,17 +208,17 @@ namespace Redis.Driver
         /// <returns></returns>
         private Task<int> ExecuteInt(RedisRequest request, object asyncState)
         {
-            return this.Execute<int>(request.ToPayload(), (source, reply) =>
+            return this.Execute<int>(request.ToPayload(), (source, response) =>
             {
-                var intReply = reply as IntegerReply;
+                var intReply = response.Reply as IntegerReply;
                 if (intReply != null)
                 {
                     source.TrySetResult(intReply.Value);
                     return;
                 }
-                if (reply is ErrorReply)
+                if (response.Reply is ErrorReply)
                 {
-                    source.TrySetException((reply as ErrorReply).Error());
+                    source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));
@@ -232,17 +232,17 @@ namespace Redis.Driver
         /// <returns></returns>
         private Task<string> ExecuteStatus(RedisRequest request, object asyncState)
         {
-            return this.Execute<string>(request.ToPayload(), (source, reply) =>
+            return this.Execute<string>(request.ToPayload(), (source, response) =>
             {
-                var statusReply = reply as StatusReply;
+                var statusReply = response.Reply as StatusReply;
                 if (statusReply != null)
                 {
                     source.TrySetResult(statusReply.Status);
                     return;
                 }
-                if (reply is ErrorReply)
+                if (response.Reply is ErrorReply)
                 {
-                    source.TrySetException((reply as ErrorReply).Error());
+                    source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));
@@ -256,21 +256,22 @@ namespace Redis.Driver
         /// <returns></returns>
         private Task<byte[][]> ExecuteMultiBytes(RedisRequest request, object asyncState)
         {
-            return this.Execute<byte[][]>(request.ToPayload(), (source, reply) =>
-            {
-                var mbReeply = reply as MultiBulkReplies;
-                if (mbReeply != null)
-                {
-                    source.TrySetResult(mbReeply.Payloads);
-                    return;
-                }
-                if (reply is ErrorReply)
-                {
-                    source.TrySetException((reply as ErrorReply).Error());
-                    return;
-                }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
-            }, asyncState);
+            //return this.Execute<byte[][]>(request.ToPayload(), (source, response) =>
+            //{
+            //    var mbReeply = response.Reply as MultiBulkReplies;
+            //    if (mbReeply != null)
+            //    {
+            //        source.TrySetResult(mbReeply.Payloads);
+            //        return;
+            //    }
+            //    if (response.Reply is ErrorReply)
+            //    {
+            //        source.TrySetException((response.Reply as ErrorReply).Error());
+            //        return;
+            //    }
+            //    source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            //}, asyncState);
+            return null;
         }
         /// <summary>
         /// execute bytes
@@ -280,17 +281,17 @@ namespace Redis.Driver
         /// <returns></returns>
         private Task<byte[]> ExecuteBytes(RedisRequest request, object asyncState)
         {
-            return this.Execute<byte[]>(request.ToPayload(), (source, reply) =>
+            return this.Execute<byte[]>(request.ToPayload(), (source, response) =>
             {
-                var mbReeply = reply as BulkReplies;
+                var mbReeply = response.Reply as BulkReplies;
                 if (mbReeply != null)
                 {
                     source.TrySetResult(mbReeply.Payload);
                     return;
                 }
-                if (reply is ErrorReply)
+                if (response.Reply is ErrorReply)
                 {
-                    source.TrySetException((reply as ErrorReply).Error());
+                    source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
                 source.TrySetException(new RedisException("Failed to resolve the Reply"));

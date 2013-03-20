@@ -8,7 +8,7 @@ namespace Redis.Driver
     /// <summary>
     /// redis协议
     /// </summary>
-    public sealed class RedisProtocol : IProtocol<IRedisReply>
+    public sealed class RedisProtocol : IProtocol<RedisResponse>
     {
         #region IProtocol Members
         /// <summary>
@@ -19,23 +19,33 @@ namespace Redis.Driver
         /// <param name="readlength"></param>
         /// <returns></returns>
         /// <exception cref="BadProtocolException">未能识别的协议</exception>
-        public IRedisReply FindResponse(IConnection connection, ArraySegment<byte> buffer, out int readlength)
+        public RedisResponse FindResponse(IConnection connection, ArraySegment<byte> buffer, out int readlength)
         {
+            IRedisReply reply = null;
             switch (buffer.Array[buffer.Offset])
             {
                 case 43://'+'
-                    return this.FindStatus(connection, buffer, out readlength);
+                    reply = this.FindStatus(buffer, out readlength);
+                    break;
                 case 45://'-'
-                    return this.FindError(connection, buffer, out readlength);
+                    reply = this.FindError(buffer, out readlength);
+                    break;
                 case 58://':'
-                    return this.FindInteger(connection, buffer, out readlength);
+                    reply = this.FindInteger(buffer, out readlength);
+                    break;
                 case 36://'$'
-                    return this.FindBulk(connection, buffer, out readlength);
+                    reply = this.FindBulk(buffer, out readlength);
+                    break;
                 case 42://'*'
-                    return this.FindMultiBulk(connection, buffer, out readlength);
+                    reply = this.FindMultiBulk(buffer, out readlength);
+                    break;
                 default:
                     throw new BadProtocolException();
             }
+            if (reply == null)
+                return null;
+
+            return new RedisResponse(GetSeqID(connection), reply);
         }
         #endregion
 
@@ -55,18 +65,17 @@ namespace Redis.Driver
         /// <summary>
         /// find status reply
         /// </summary>
-        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readlength"></param>
         /// <returns></returns>
-        private StatusReply FindStatus(IConnection connection, ArraySegment<byte> buffer, out int readlength)
+        private StatusReply FindStatus(ArraySegment<byte> buffer, out int readlength)
         {
             var payload = buffer.Array;
             for (int i = buffer.Offset + 1, l = buffer.Offset + buffer.Count; i < l; i++)
                 if (payload[i] == 13 && i + 1 < l && payload[i + 1] == 10)
                 {
                     readlength = i + 2 - buffer.Offset;
-                    return new StatusReply(GetSeqID(connection), Encoding.UTF8.GetString(payload, buffer.Offset + 1, readlength - 3));
+                    return new StatusReply(Encoding.UTF8.GetString(payload, buffer.Offset + 1, readlength - 3));
                 }
 
             readlength = 0;
@@ -75,18 +84,17 @@ namespace Redis.Driver
         /// <summary>
         /// find error reply
         /// </summary>
-        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readlength"></param>
         /// <returns></returns>
-        private ErrorReply FindError(IConnection connection, ArraySegment<byte> buffer, out int readlength)
+        private ErrorReply FindError(ArraySegment<byte> buffer, out int readlength)
         {
             var payload = buffer.Array;
             for (int i = buffer.Offset + 1, l = buffer.Offset + buffer.Count; i < l; i++)
                 if (payload[i] == 13 && i + 1 < l && payload[i + 1] == 10)
                 {
                     readlength = i + 2 - buffer.Offset;
-                    return new ErrorReply(GetSeqID(connection), Encoding.UTF8.GetString(payload, buffer.Offset + 1, readlength - 3));
+                    return new ErrorReply(Encoding.UTF8.GetString(payload, buffer.Offset + 1, readlength - 3));
                 }
 
             readlength = 0;
@@ -95,11 +103,10 @@ namespace Redis.Driver
         /// <summary>
         /// find integer reply
         /// </summary>
-        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readlength"></param>
         /// <returns></returns>
-        private IntegerReply FindInteger(IConnection connection, ArraySegment<byte> buffer, out int readlength)
+        private IntegerReply FindInteger(ArraySegment<byte> buffer, out int readlength)
         {
             var prefixed = GetPrefixedLength(buffer);
             if (prefixed.OverIndex == -1)
@@ -114,16 +121,15 @@ namespace Redis.Driver
                 readlength = 0;
                 return null;
             }
-            return new IntegerReply(GetSeqID(connection), prefixed.Value);
+            return new IntegerReply(prefixed.Value);
         }
         /// <summary>
         /// find bulk reply
         /// </summary>
-        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readlength"></param>
         /// <returns></returns> 
-        private BulkReplies FindBulk(IConnection connection, ArraySegment<byte> buffer, out int readlength)
+        private BulkReplies FindBulk(ArraySegment<byte> buffer, out int readlength)
         {
             //find bulk length
             var prefixed = GetPrefixedLength(buffer);
@@ -141,7 +147,7 @@ namespace Redis.Driver
                     readlength = 0;
                     return null;
                 }
-                return new BulkReplies(GetSeqID(connection), null);
+                return new BulkReplies(null);
             }
 
             readlength = prefixed.OverIndex + prefixed.Value + 3 - buffer.Offset;
@@ -149,7 +155,7 @@ namespace Redis.Driver
             {
                 var payload = new byte[prefixed.Value];
                 Buffer.BlockCopy(buffer.Array, prefixed.OverIndex + 1, payload, 0, prefixed.Value);
-                return new BulkReplies(GetSeqID(connection), payload);
+                return new BulkReplies(payload);
             }
 
             readlength = 0;
@@ -158,11 +164,10 @@ namespace Redis.Driver
         /// <summary>
         /// find multi-bulk reply
         /// </summary>
-        /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readlength"></param>
         /// <returns></returns>
-        private MultiBulkReplies FindMultiBulk(IConnection connection, ArraySegment<byte> buffer, out int readlength)
+        private MultiBulkReplies FindMultiBulk(ArraySegment<byte> buffer, out int readlength)
         {
             var prefixed = GetPrefixedLength(buffer);
             if (prefixed.OverIndex == -1)
@@ -179,52 +184,52 @@ namespace Redis.Driver
                     readlength = 0;
                     return null;
                 }
-                return new MultiBulkReplies(GetSeqID(connection), null);
+                return new MultiBulkReplies(null);
             }
 
-            var arrBulk = new PrefixedLength[prefixed.Value];
-            var currentOffset = prefixed.OverIndex + 1;
-            var nextBuffer = new ArraySegment<byte>(buffer.Array, currentOffset, buffer.Count - currentOffset + buffer.Offset);
+            var replies = new IRedisReply[prefixed.Value];
 
+            int childReadLength = 0;
+            var nextBuffer = new ArraySegment<byte>(buffer.Array, prefixed.OverIndex + 1,
+                buffer.Count - (prefixed.OverIndex + 1) + buffer.Offset);
             for (int i = 0, l = prefixed.Value; i < l; i++)
             {
-                var childPrefixed = GetPrefixedLength(nextBuffer);
-                if (childPrefixed.OverIndex == -1)
+                IRedisReply reply = null;
+                switch (nextBuffer.Array[nextBuffer.Offset])
+                {
+                    case 43://'+'
+                        reply = this.FindStatus(nextBuffer, out childReadLength);
+                        break;
+                    case 45://'-'
+                        reply = this.FindError(nextBuffer, out childReadLength);
+                        break;
+                    case 58://':'
+                        reply = this.FindInteger(nextBuffer, out childReadLength);
+                        break;
+                    case 36://'$'
+                        reply = this.FindBulk(nextBuffer, out childReadLength);
+                        break;
+                    default:
+                        throw new BadProtocolException();
+                }
+
+                if (reply == null)
                 {
                     readlength = 0;
                     return null;
                 }
 
-                arrBulk[i] = childPrefixed;
+                replies[i] = reply;
 
-                if (childPrefixed.Value < 1)
-                    currentOffset = childPrefixed.OverIndex + 1;
-                else
-                    currentOffset = childPrefixed.OverIndex + childPrefixed.Value + 3;
-
-                nextBuffer = new ArraySegment<byte>(buffer.Array, currentOffset, buffer.Count - currentOffset + buffer.Offset);
-            }
-
-            readlength = currentOffset - buffer.Offset;
-            if (readlength > buffer.Count)
-            {
-                readlength = 0;
-                return null;
-            }
-
-            //copy data
-            var arrPayloads = new byte[prefixed.Value][];
-            for (int i = 0, l = prefixed.Value; i < l; i++)
-            {
-                var childPrefixed = arrBulk[i];
-                if (childPrefixed.Value > 0)
+                if (i < l - 1)
                 {
-                    var payload = new byte[childPrefixed.Value];
-                    Buffer.BlockCopy(buffer.Array, childPrefixed.OverIndex + 1, payload, 0, childPrefixed.Value);
-                    arrPayloads[i] = payload;
+                    nextBuffer = new ArraySegment<byte>(buffer.Array, nextBuffer.Offset + childReadLength,
+                        nextBuffer.Count - childReadLength);
                 }
             }
-            return new MultiBulkReplies(GetSeqID(connection), arrPayloads);
+
+            readlength = nextBuffer.Offset - buffer.Offset + childReadLength;
+            return new MultiBulkReplies(replies);
         }
         #endregion
 

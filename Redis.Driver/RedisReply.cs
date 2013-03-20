@@ -1,47 +1,19 @@
 ﻿using System;
-using Sodao.FastSocket.Client.Response;
 
 namespace Redis.Driver
 {
     /// <summary>
     /// redis reply interface.
     /// </summary>
-    public interface IRedisReply : IResponse
+    public interface IRedisReply
     {
     }
-
-    #region BaseReply
-    /// <summary>
-    /// base redis reply
-    /// </summary>
-    public abstract class BaseReply : IRedisReply
-    {
-        private int _seqID;
-
-        /// <summary>
-        /// new
-        /// </summary>
-        /// <param name="seqID"></param>
-        public BaseReply(int seqID)
-        {
-            this._seqID = seqID;
-        }
-
-        /// <summary>
-        /// get seqID
-        /// </summary>
-        public int SeqID
-        {
-            get { return this._seqID; }
-        }
-    }
-    #endregion
 
     #region Error reply
     /// <summary>
     /// error reply
     /// </summary>
-    public sealed class ErrorReply : BaseReply
+    public sealed class ErrorReply : IRedisReply
     {
         #region Public Members
         /// <summary>
@@ -54,11 +26,9 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
-        /// <param name="seqID"></param>
         /// <param name="errorMessage"></param>
         /// <exception cref="ArgumentNullException">errorMessage is null or empty.</exception>
-        public ErrorReply(int seqID, string errorMessage)
-            : base(seqID)
+        public ErrorReply(string errorMessage)
         {
             if (string.IsNullOrEmpty(errorMessage))
                 throw new ArgumentNullException("errorMessage");
@@ -84,7 +54,7 @@ namespace Redis.Driver
     /// <summary>
     /// Iinteger reply
     /// </summary>
-    public sealed class IntegerReply : BaseReply
+    public sealed class IntegerReply : IRedisReply
     {
         #region Public Members
         /// <summary>
@@ -97,10 +67,8 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
-        /// <param name="seqID"></param>
         /// <param name="value"></param>
-        public IntegerReply(int seqID, int value)
-            : base(seqID)
+        public IntegerReply(int value)
         {
             this.Value = value;
         }
@@ -112,7 +80,7 @@ namespace Redis.Driver
     /// <summary>
     /// status reply
     /// </summary>
-    public sealed class StatusReply : BaseReply
+    public sealed class StatusReply : IRedisReply
     {
         #region Public Members
         /// <summary>
@@ -125,11 +93,9 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
-        /// <param name="seqID"></param>
         /// <param name="status"></param>
         /// <exception cref="ArgumentNullException">status is null or empty.</exception>
-        public StatusReply(int seqID, string status)
-            : base(seqID)
+        public StatusReply(string status)
         {
             if (string.IsNullOrEmpty(status))
                 throw new ArgumentNullException("status");
@@ -144,7 +110,7 @@ namespace Redis.Driver
     /// <summary>
     /// bulk replies
     /// </summary>
-    public sealed class BulkReplies : BaseReply
+    public sealed class BulkReplies : IRedisReply
     {
         #region Public Members
         /// <summary>
@@ -157,10 +123,8 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
-        /// <param name="seqID"></param>
         /// <param name="payload"></param>
-        public BulkReplies(int seqID, byte[] payload)
-            : base(seqID)
+        public BulkReplies(byte[] payload)
         {
             this.Payload = payload;
         }
@@ -172,25 +136,23 @@ namespace Redis.Driver
     /// <summary>
     /// Multi-bulk replies
     /// </summary>
-    public sealed class MultiBulkReplies : BaseReply
+    public sealed class MultiBulkReplies : IRedisReply
     {
         #region Public Members
         /// <summary>
-        /// payloads
+        /// Replies
         /// </summary>
-        public readonly byte[][] Payloads;
+        public readonly IRedisReply[] Replies;
         #endregion
 
         #region Constructors
         /// <summary>
         /// new
         /// </summary>
-        /// <param name="seqID"></param>
-        /// <param name="payloads"></param>
-        public MultiBulkReplies(int seqID, byte[][] payloads)
-            : base(seqID)
+        /// <param name="replies"></param>
+        public MultiBulkReplies(IRedisReply[] replies)
         {
-            this.Payloads = payloads;
+            this.Replies = replies;
         }
         #endregion
     }
