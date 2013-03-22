@@ -156,6 +156,14 @@ namespace Redis.Driver
 
         #region Override Methods
         /// <summary>
+        /// InitializeBufferManager
+        /// </summary>
+        /// <returns></returns>
+        protected override IBufferManager InitializeBufferManager()
+        {
+            return new GCBufferManager();
+        }
+        /// <summary>
         /// OnMessageReceived
         /// </summary>
         /// <param name="connection"></param>
