@@ -18,7 +18,7 @@ namespace Redis.Driver
         /// <summary>
         /// Removes the specified keys. A key is ignored if it does not exist.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="keys"></param>
         /// <param name="asyncState"></param>
         /// <returns>The number of keys that were removed.</returns>
         Task<int> Del(string[] keys, object asyncState = null);
