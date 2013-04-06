@@ -8,7 +8,7 @@ namespace Redis.Driver
     /// <summary>
     /// redis client
     /// </summary>
-    public sealed class RedisClient : BaseSocketClient<RedisResponse>,
+    public sealed class RedisClient : PooledSocketClient<RedisResponse>,
         IStringCommands
     {
         #region Constructors

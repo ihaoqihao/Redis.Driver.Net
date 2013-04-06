@@ -15,9 +15,9 @@ namespace Redis.Driver
     public sealed class RedisSubscriber : BaseHost
     {
         #region Private Members
-        private readonly ISocketConnector _connector = null;
         private readonly RedisProtocol _protocol = new RedisProtocol();
         private IConnection _currentConnection = null;
+        private readonly EndPoint _endPoint = null;
 
         private readonly HashSet<string> _setChannels = new HashSet<string>();
         private readonly HashSet<string> _setPatterns = new HashSet<string>();
@@ -39,32 +39,28 @@ namespace Redis.Driver
         public RedisSubscriber(string host, int port)
             : base(1024, 1024)
         {
-            this._connector = new DefaultSocketConnector(string.Concat(host, port.ToString()),
-                new IPEndPoint(IPAddress.Parse(host), port), this);
-            this._connector.Connected += new Action<ISocketConnector, IConnection>(this.Connector_Connected);
-            this._connector.ConnectFailed += new Action<ISocketConnector>(this.Connector_ConnectFailed);
-            this._connector.BeginConnect();
+            this._endPoint = new IPEndPoint(IPAddress.Parse(host), port);
+            this.BeginConnect();
         }
         #endregion
 
         #region Private Methods
         /// <summary>
-        /// connected
+        /// begin connect
         /// </summary>
-        /// <param name="connector"></param>
-        /// <param name="connection"></param>
-        private void Connector_Connected(ISocketConnector connector, IConnection connection)
+        private void BeginConnect()
         {
-            base.RegisterConnection(connection);
-        }
-        /// <summary>
-        /// connect failed
-        /// </summary>
-        /// <param name="connector"></param>
-        private void Connector_ConnectFailed(ISocketConnector connector)
-        {
-            //延时重连
-            TaskEx.Delay(3000, this._connector.BeginConnect);
+            SocketConnector.BeginConnect(this._endPoint, this, connection =>
+            {
+                if (connection == null)
+                {
+                    //延时重连
+                    TaskEx.Delay(3000, this.BeginConnect);
+                    return;
+                }
+
+                base.RegisterConnection(connection);
+            });
         }
         /// <summary>
         /// fire Listener
@@ -155,14 +151,6 @@ namespace Redis.Driver
         #endregion
 
         #region Override Methods
-        /// <summary>
-        /// InitializeBufferManager
-        /// </summary>
-        /// <returns></returns>
-        protected override IBufferManager InitializeBufferManager()
-        {
-            return new GCBufferManager();
-        }
         /// <summary>
         /// OnMessageReceived
         /// </summary>
@@ -268,7 +256,7 @@ namespace Redis.Driver
             base.OnDisconnected(connection, ex);
 
             this._currentConnection = null;
-            this._connector.BeginConnect();
+            this.BeginConnect();
         }
         #endregion
 
