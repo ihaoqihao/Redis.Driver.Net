@@ -34,6 +34,21 @@ namespace Redis.Driver
         /// <summary>
         /// new
         /// </summary>
+        /// <param name="connectionString">连接字符串,如 redis://127.0.0.1:6379</param>
+        /// <exception cref="ArgumentNullException">connectionString is null or empty.</exception>
+        public RedisSubscriber(string connectionString)
+            : base(1024, 1024)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+                throw new ArgumentNullException("connectionString");
+
+            var arr = connectionString.Split(':');
+            this._endPoint = new IPEndPoint(IPAddress.Parse(arr[1].Substring(2)), int.Parse(arr[2]));
+            this.BeginConnect();
+        }
+        /// <summary>
+        /// new
+        /// </summary>
         /// <param name="host"></param>
         /// <param name="port"></param>
         public RedisSubscriber(string host, int port)

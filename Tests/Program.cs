@@ -9,7 +9,7 @@ namespace Tests
     {
         static public void Main()
         {
-            var sub = new Redis.Driver.RedisSubscriber("127.0.0.1", 6379);
+            var sub = new Redis.Driver.RedisSubscriber("redis://127.0.0.1:6379");
             sub.Listener += (channel, payload) =>
             {
                 Console.WriteLine(channel);
