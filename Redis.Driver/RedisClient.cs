@@ -171,6 +171,31 @@ namespace Redis.Driver
         }
         #endregion
 
+        #region Pub/Sub Members
+        /// <summary>
+        /// Posts a message to the given channel.
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <param name="message"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task<int> Publish(string channel, string message, object asyncState = null)
+        {
+            return this.ExecuteInt(new RedisRequest(3).AddArgument("PUBLISH").AddArgument(channel).AddArgument(message), asyncState);
+        }
+        /// <summary>
+        /// Posts a message to the given channel.
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <param name="message"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task<int> Publish(string channel, byte[] message, object asyncState = null)
+        {
+            return this.ExecuteInt(new RedisRequest(3).AddArgument("PUBLISH").AddArgument(channel).AddArgument(message), asyncState);
+        }
+        #endregion
+
         #region Private Methods
         /// <summary>
         /// execute
