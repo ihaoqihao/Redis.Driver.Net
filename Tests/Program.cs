@@ -17,7 +17,7 @@ namespace Tests
             };
             sub.Subscribe("aaa");
 
-            Redis.Driver.RedisClientFactory.Get("test1").Publish("aaa", "asdfasdf");
+            Redis.Driver.RedisClientFactory.Get("redis.config", "point1").Publish("aaa", "asdfasdf");
 
             Console.ReadLine();
         }

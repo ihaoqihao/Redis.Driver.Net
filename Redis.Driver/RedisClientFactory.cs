@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Configuration;
+using System.IO;
 using System.Net;
 
 namespace Redis.Driver
@@ -16,18 +17,44 @@ namespace Redis.Driver
         /// <summary>
         /// get <see cref="RedisClient"/>
         /// </summary>
+        /// <param name="endpointName"></param>
+        /// <returns></returns>
+        static public RedisClient Get(string endpointName)
+        {
+            return Get(null, endpointName);
+        }
+        /// <summary>
+        /// get <see cref="RedisClient"/>
+        /// </summary>
+        /// <param name="configFile"></param>
+        /// <param name="endpointName"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">endpointName is null or empty.</exception>
-        static public RedisClient Get(string endpointName)
+        static public RedisClient Get(string configFile, string endpointName)
         {
             if (string.IsNullOrEmpty(endpointName))
                 throw new ArgumentNullException("endpointName");
 
-            return _dic.GetOrAdd(endpointName, key => new Lazy<RedisClient>(() =>
+            if (configFile == null)
+                configFile = string.Empty;
+
+            return _dic.GetOrAdd(string.Concat(configFile, endpointName), key => new Lazy<RedisClient>(() =>
             {
-                //get config
-                var config = ConfigurationManager.GetSection("redis") as Config.RedisConfigSection;
-                var clientConfig = config.Clients.Get(key);
+                Config.RedisConfigSection config = null;
+
+                if (string.IsNullOrEmpty(configFile))
+                    config = ConfigurationManager.GetSection("redis") as Config.RedisConfigSection;
+                else
+                {
+                    config = ConfigurationManager.OpenMappedExeConfiguration(
+                        new ExeConfigurationFileMap
+                        {
+                            ExeConfigFilename = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configFile)
+                        }, ConfigurationUserLevel.None)
+                        .GetSection("redis") as Config.RedisConfigSection;
+                }
+
+                var clientConfig = config.Clients.Get(endpointName);
 
                 var redisClient = new RedisClient(clientConfig.SocketBufferSize,
                     clientConfig.MessageBufferSize,
@@ -37,7 +64,7 @@ namespace Redis.Driver
                 foreach (Config.ServerConfig server in clientConfig.Servers)
                     redisClient.RegisterServerNode(string.Concat(server.Host, server.Port),
                         new IPEndPoint(IPAddress.Parse(server.Host), server.Port));
-                
+
                 return redisClient;
             }, true)).Value;
         }
