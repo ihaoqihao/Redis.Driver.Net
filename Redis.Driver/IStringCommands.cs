@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Redis.Driver
 {
@@ -39,6 +41,25 @@ namespace Redis.Driver
         /// <returns>the bit value stored at offset.</returns>
         Task<int> GetBit(string key, int offset, object asyncState = null);
         /// <summary>
+        /// Get the value of key. 
+        /// If the key does not exist the special value nil is returned. 
+        /// An error is returned if the value stored at key is not a string, because GET only handles string values.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>the value of key, or nil when key does not exist.</returns>
+        Task<byte[]> Get(string key, object asyncState = null);
+        /// <summary>
+        /// Get the value of key. 
+        /// If the key does not exist the special value nil is returned. 
+        /// An error is returned if the value stored at key is not a string, because GET only handles string values.        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <param name="valueFactory"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>the value of key, or nil when key does not exist.</returns>
+        Task<T> Get<T>(string key, Func<byte[], T> valueFactory, object asyncState = null);
+        /// <summary>
         /// Returns the values of all specified keys. 
         /// For every key that does not hold a string value or does not exist, 
         /// the special value nil is returned. Because of this, the operation never fails.
@@ -48,14 +69,16 @@ namespace Redis.Driver
         /// <returns>list of values at the specified keys.</returns>
         Task<byte[][]> Get(string[] keys, object asyncState = null);
         /// <summary>
-        /// Get the value of key. 
-        /// If the key does not exist the special value nil is returned. 
-        /// An error is returned if the value stored at key is not a string, because GET only handles string values.
+        /// Returns the values of all specified keys. 
+        /// For every key that does not hold a string value or does not exist, 
+        /// the special value nil is returned. Because of this, the operation never fails.
         /// </summary>
-        /// <param name="key"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="keys"></param>
+        /// <param name="valueFactory"></param>
         /// <param name="asyncState"></param>
-        /// <returns>the value of key, or nil when key does not exist.</returns>
-        Task<byte[]> Get(string key, object asyncState = null);
+        /// <returns>list of values at the specified keys.</returns>
+        Task<T[]> Get<T>(string[] keys, Func<byte[], T> valueFactory, object asyncState = null);
         /// <summary>
         /// Set key to hold the string value. 
         /// If key already holds a value, it is overwritten, regardless of its type.
@@ -74,5 +97,15 @@ namespace Redis.Driver
         /// <param name="asyncState"></param>
         /// <returns>always OK since SET can't fail.</returns>
         Task Set(string key, byte[] value, object asyncState = null);
+        /// <summary>
+        /// Sets the given keys to their respective values. 
+        /// MSET replaces existing values with new values, just as regular SET. See MSETNX if you don't want to overwrite existing values.
+        /// MSET is atomic, so all given keys are set at once. 
+        /// It is not possible for clients to see that some of the keys were updated while others are unchanged.
+        /// </summary>
+        /// <param name="dic"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>always OK since MSET can't fail.</returns>
+        Task Set(Dictionary<string, byte[]> dic, object asyncState = null);
     }
 }
