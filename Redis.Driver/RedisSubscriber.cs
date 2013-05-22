@@ -70,7 +70,7 @@ namespace Redis.Driver
                 if (connection == null)
                 {
                     //延时重连
-                    TaskEx.Delay(3000, this.BeginConnect);
+                    TaskEx.Delay(new Random().Next(1000, 3000), this.BeginConnect);
                     return;
                 }
 
@@ -269,9 +269,8 @@ namespace Redis.Driver
         protected override void OnDisconnected(IConnection connection, Exception ex)
         {
             base.OnDisconnected(connection, ex);
-
             this._currentConnection = null;
-            this.BeginConnect();
+            TaskEx.Delay(new Random().Next(10, 200), this.BeginConnect);
         }
         #endregion
 
