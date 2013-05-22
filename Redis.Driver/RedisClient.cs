@@ -130,6 +130,18 @@ namespace Redis.Driver
                     return c.Result.Select(p => System.Text.Encoding.UTF8.GetString(p)).ToArray();
                 });
         }
+        /// <summary>
+        /// Set a timeout on key. After the timeout has expired, the key will automatically be deleted. 
+        /// A key with an associated timeout is often said to be volatile in Redis terminology.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="seconds"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task Expire(string key, int seconds, object asyncState = null)
+        {
+            return this.ExecuteInt(new RedisRequest(3).AddArgument("EXPIRE").AddArgument(key).AddArgument(seconds), asyncState);
+        }
         #endregion
 
         #region IStringCommands Members
