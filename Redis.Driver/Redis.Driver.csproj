@@ -34,10 +34,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FastSocket.Client_1.0">
-      <HintPath>..\lib\FastSocket.Client_1.0.dll</HintPath>
+      <HintPath>..\packages\fastsocket_client.1.0.0.7\lib\net40\FastSocket.Client_1.0.dll</HintPath>
     </Reference>
     <Reference Include="FastSocket.SocketBase_1.0">
-      <HintPath>..\lib\FastSocket.SocketBase_1.0.dll</HintPath>
+      <HintPath>..\packages\fastsocket_base.1.0.0.4\lib\net40\FastSocket.SocketBase_1.0.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
@@ -63,6 +63,7 @@
     <Compile Include="RedisSubscriber.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="redis.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

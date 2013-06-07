@@ -332,7 +332,8 @@ namespace Redis.Driver
                 throw new ArgumentNullException("callback");
 
             var source = new TaskCompletionSource<T>(asyncState);
-            base.Send(new Request<RedisResponse>(base.NextRequestSeqID(), payload, ex => source.TrySetException(ex), response => callback(source, response)));
+            base.Send(new Request<RedisResponse>(base.NextRequestSeqID(), string.Empty, payload,
+                ex => source.TrySetException(ex), response => callback(source, response)));
             return source.Task;
         }
         /// <summary>
