@@ -427,7 +427,7 @@ namespace Redis.Driver
                 var mbReeply = response.Reply as BulkReplies;
                 if (mbReeply != null)
                 {
-                    if (mbReeply.Payload == null)
+                    if (mbReeply.Payload == null || mbReeply.Payload.Length == 0)
                     {
                         source.TrySetResult(default(T));
                         return;
@@ -521,6 +521,12 @@ namespace Redis.Driver
                         var objBulk = mbReeply.Replies[i] as BulkReplies;
                         if (objBulk == null)
                             continue;
+
+                        if (objBulk.Payload == null || objBulk.Payload.Length == 0)
+                        {
+                            arrResults[i] = default(T);
+                            continue;
+                        }
 
                         try
                         {
