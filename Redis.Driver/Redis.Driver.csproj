@@ -49,6 +49,7 @@
     <Compile Include="Config\EndpointConfig.cs" />
     <Compile Include="Config\RedisConfigSection.cs" />
     <Compile Include="DefaultRedisReplyQueue.cs" />
+    <Compile Include="IHashCommands.cs" />
     <Compile Include="IKeyCommands.cs" />
     <Compile Include="IRedisReplyQueue.cs" />
     <Compile Include="IStringCommands.cs" />
