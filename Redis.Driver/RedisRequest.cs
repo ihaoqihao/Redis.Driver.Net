@@ -21,8 +21,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">argNumber less than 1.</exception>
         public RedisRequest(int argNumber)
         {
-            if (argNumber < 1)
-                throw new ArgumentNullException("argNumber", "argNumber less than 1.");
+            if (argNumber < 1) throw new ArgumentNullException("argNumber", "argNumber less than 1.");
 
             this._stream = new MemoryStream();
             this._stream.WriteByte(42);//'*'
@@ -41,8 +40,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">value is null or empty.</exception>
         public RedisRequest AddArgument(string value)
         {
-            if (string.IsNullOrEmpty(value))
-                throw new ArgumentNullException("value");
+            if (string.IsNullOrEmpty(value)) throw new ArgumentNullException("value");
 
             var bytes = Encoding.UTF8.GetBytes(value);
             this._stream.WriteByte(36);//'$'
@@ -63,8 +61,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">keys is null or empty.</exception>
         public RedisRequest AddArgument(params string[] value)
         {
-            if (value == null || value.Length == 0)
-                throw new ArgumentNullException("keys");
+            if (value == null || value.Length == 0) throw new ArgumentNullException("keys");
 
             foreach (var child in value)
                 this.AddArgument(child);
@@ -79,8 +76,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">value is null.</exception>
         public RedisRequest AddArgument(byte[] value)
         {
-            if (value == null || value.Length == 0)
-                throw new ArgumentNullException("value");
+            if (value == null || value.Length == 0) throw new ArgumentNullException("value");
 
             this._stream.WriteByte(36);//'$'
             WriteRedisInteger(this._stream, value.Length);
@@ -136,8 +132,7 @@ namespace Redis.Driver
         /// <returns></returns>
         public byte[] ToPayload()
         {
-            if (this._stream == null)
-                return null;
+            if (this._stream == null) return null;
 
             using (this._stream)
                 return this._stream.ToArray();

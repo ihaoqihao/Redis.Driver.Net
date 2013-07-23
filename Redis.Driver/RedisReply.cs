@@ -30,9 +30,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">errorMessage is null or empty.</exception>
         public ErrorReply(string errorMessage)
         {
-            if (string.IsNullOrEmpty(errorMessage))
-                throw new ArgumentNullException("errorMessage");
-
+            if (string.IsNullOrEmpty(errorMessage)) throw new ArgumentNullException("errorMessage");
             this.ErrorMessage = errorMessage;
         }
         #endregion
@@ -97,9 +95,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">status is null or empty.</exception>
         public StatusReply(string status)
         {
-            if (string.IsNullOrEmpty(status))
-                throw new ArgumentNullException("status");
-
+            if (string.IsNullOrEmpty(status)) throw new ArgumentNullException("status");
             this.Status = status;
         }
         #endregion

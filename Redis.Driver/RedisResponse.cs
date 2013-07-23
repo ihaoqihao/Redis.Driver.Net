@@ -21,8 +21,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">reply is null.</exception>
         public RedisResponse(int seqID, IRedisReply reply)
         {
-            if (reply == null)
-                throw new ArgumentNullException("reply");
+            if (reply == null) throw new ArgumentNullException("reply");
 
             this._seqID = seqID;
             this.Reply = reply;

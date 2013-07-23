@@ -39,12 +39,9 @@ namespace Redis.Driver
                 case 42://'*'
                     reply = this.FindMultiBulk(buffer, out readlength);
                     break;
-                default:
-                    throw new BadProtocolException();
+                default: throw new BadProtocolException();
             }
-            if (reply == null)
-                return null;
-
+            if (reply == null) return null;
             return new RedisResponse(GetSeqID(connection), reply);
         }
         #endregion
@@ -57,9 +54,7 @@ namespace Redis.Driver
         /// <returns></returns>
         static private int GetSeqID(IConnection connection)
         {
-            if (connection == null || connection.UserData == null)
-                return -1;
-
+            if (connection == null || connection.UserData == null) return -1;
             return (connection.UserData as IRedisReplyQueue).Dequeue();
         }
         /// <summary>
@@ -72,12 +67,13 @@ namespace Redis.Driver
         {
             var payload = buffer.Array;
             for (int i = buffer.Offset + 1, l = buffer.Offset + buffer.Count; i < l; i++)
+            {
                 if (payload[i] == 13 && i + 1 < l && payload[i + 1] == 10)
                 {
                     readlength = i + 2 - buffer.Offset;
                     return new StatusReply(Encoding.UTF8.GetString(payload, buffer.Offset + 1, readlength - 3));
                 }
-
+            }
             readlength = 0;
             return null;
         }
@@ -91,12 +87,13 @@ namespace Redis.Driver
         {
             var payload = buffer.Array;
             for (int i = buffer.Offset + 1, l = buffer.Offset + buffer.Count; i < l; i++)
+            {
                 if (payload[i] == 13 && i + 1 < l && payload[i + 1] == 10)
                 {
                     readlength = i + 2 - buffer.Offset;
                     return new ErrorReply(Encoding.UTF8.GetString(payload, buffer.Offset + 1, readlength - 3));
                 }
-
+            }
             readlength = 0;
             return null;
         }
@@ -209,8 +206,7 @@ namespace Redis.Driver
                     case 36://'$'
                         reply = this.FindBulk(nextBuffer, out childReadLength);
                         break;
-                    default:
-                        throw new BadProtocolException();
+                    default: throw new BadProtocolException();
                 }
 
                 if (reply == null)
@@ -222,10 +218,7 @@ namespace Redis.Driver
                 replies[i] = reply;
 
                 if (i < l - 1)
-                {
-                    nextBuffer = new ArraySegment<byte>(buffer.Array, nextBuffer.Offset + childReadLength,
-                        nextBuffer.Count - childReadLength);
-                }
+                    nextBuffer = new ArraySegment<byte>(buffer.Array, nextBuffer.Offset + childReadLength, nextBuffer.Count - childReadLength);
             }
 
             readlength = nextBuffer.Offset - buffer.Offset + childReadLength;
@@ -241,8 +234,7 @@ namespace Redis.Driver
         /// <returns>if not found, return {OverIndex=-1,Value=-1}</returns>
         static private PrefixedLength GetPrefixedLength(ArraySegment<byte> buffer)
         {
-            if (buffer.Count < 2)
-                return new PrefixedLength(-1, -1);
+            if (buffer.Count < 2) return new PrefixedLength(-1, -1);
 
             var payload = buffer.Array;
 
@@ -252,9 +244,7 @@ namespace Redis.Driver
             int intValue = 0;
             for (int i = start, l = buffer.Offset + buffer.Count; i < l; i++)
             {
-                if (payload[i] == 13)
-                    return new PrefixedLength(i + 1, isNegativeValue ? -intValue : intValue);
-
+                if (payload[i] == 13) return new PrefixedLength(i + 1, isNegativeValue ? -intValue : intValue);
                 intValue = intValue * 10 + (payload[i] - 48);//'0' is 48
             }
 

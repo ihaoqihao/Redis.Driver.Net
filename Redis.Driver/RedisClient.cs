@@ -10,8 +10,7 @@ namespace Redis.Driver
     /// <summary>
     /// redis client
     /// </summary>
-    public sealed class RedisClient : PooledSocketClient<RedisResponse>,
-        IStringCommands, IKeyCommands
+    public sealed class RedisClient : PooledSocketClient<RedisResponse>, IStringCommands, IKeyCommands, IHashCommands
     {
         #region Constructors
         /// <summary>
@@ -26,10 +25,10 @@ namespace Redis.Driver
             int millisecondsSendTimeout,
             int millisecondsReceiveTimeout)
             : base(new RedisProtocol(),
-                   socketBufferSize,
-                   messageBufferSize,
-                   millisecondsSendTimeout,
-                   millisecondsReceiveTimeout)
+            socketBufferSize,
+            messageBufferSize,
+            millisecondsSendTimeout,
+            millisecondsReceiveTimeout)
         {
         }
         #endregion
@@ -46,6 +45,13 @@ namespace Redis.Driver
         /// keys
         /// </summary>
         public IKeyCommands Keys
+        {
+            get { return this; }
+        }
+        /// <summary>
+        /// hashes
+        /// </summary>
+        public IHashCommands Hashes
         {
             get { return this; }
         }
@@ -71,21 +77,9 @@ namespace Redis.Driver
             (connection.UserData as IRedisReplyQueue).Enqueue((packet as Request<RedisResponse>).SeqID);
             base.OnStartSending(connection, packet);
         }
-        /// <summary>
-        /// OnSendCallback
-        /// </summary>
-        /// <param name="connection"></param>
-        /// <param name="e"></param>
-        protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
-        {
-            if (e.Status == SendCallbackStatus.Failed)
-                (connection.UserData as IRedisReplyQueue).Unenqueue();
-
-            base.OnSendCallback(connection, e);
-        }
         #endregion
 
-        #region IKeyCommands 成员
+        #region IKeyCommands Members
         /// <summary>
         /// Removes the specified keys. A key is ignored if it does not exist.
         /// </summary>
@@ -105,9 +99,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">keys is null or empty.</exception>
         Task<int> IKeyCommands.Del(string[] keys, object asyncState)
         {
-            if (keys == null || keys.Length == 0)
-                throw new ArgumentNullException("keys", "keys is null or empty.");
-
+            if (keys == null || keys.Length == 0) throw new ArgumentNullException("keys", "keys is null or empty.");
             return this.ExecuteInt(new RedisRequest(keys.Length + 1).AddArgument("DEL").AddArgument(keys), asyncState);
         }
         /// <summary>
@@ -121,12 +113,8 @@ namespace Redis.Driver
             return this.ExecuteMultiBytes(new RedisRequest(2).AddArgument("KEYS").AddArgument(pattern), asyncState)
                 .ContinueWith(c =>
                 {
-                    if (c.IsFaulted)
-                        return null;
-
-                    if (c.Result == null || c.Result.Length == 0)
-                        return new string[0];
-
+                    if (c.IsFaulted) return null;
+                    if (c.Result == null || c.Result.Length == 0) return new string[0];
                     return c.Result.Select(p => System.Text.Encoding.UTF8.GetString(p)).ToArray();
                 });
         }
@@ -291,6 +279,75 @@ namespace Redis.Driver
         }
         #endregion
 
+        #region IHashCommands Members
+
+        public Task<bool> Remove(string key, string field, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<long> Remove(string key, string[] fields, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> Exists(string key, string field, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetString(string key, string field, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<byte[]> Get(string key, string field, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string[]> GetString(string key, string[] fields, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<byte[][]> Get(string key, string[] fields, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Dictionary<string, byte[]>> GetAll(string key, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> Set(string key, string field, string value, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> Set(string key, string field, byte[] value, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task Set(string key, Dictionary<string, byte[]> values, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> SetIfNotExists(string key, string field, string value, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> SetIfNotExists(string key, string field, byte[] value, object asyncState = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
         #region Pub/Sub Members
         /// <summary>
         /// Posts a message to the given channel.
@@ -328,8 +385,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">callback is null.</exception>
         private Task<T> Execute<T>(byte[] payload, Action<TaskCompletionSource<T>, RedisResponse> callback, object asyncState)
         {
-            if (callback == null)
-                throw new ArgumentNullException("callback");
+            if (callback == null) throw new ArgumentNullException("callback");
 
             var source = new TaskCompletionSource<T>(asyncState);
             base.Send(new Request<RedisResponse>(base.NextRequestSeqID(), string.Empty, payload,
@@ -419,8 +475,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">valueFactory is null.</exception>
         private Task<T> ExecuteBytes<T>(RedisRequest request, Func<byte[], T> valueFactory, object asyncState)
         {
-            if (valueFactory == null)
-                throw new ArgumentNullException("valueFactory");
+            if (valueFactory == null) throw new ArgumentNullException("valueFactory");
 
             return this.Execute<T>(request.ToPayload(), (source, response) =>
             {
@@ -501,8 +556,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">valueFactory is null.</exception>
         private Task<T[]> ExecuteMultiBytes<T>(RedisRequest request, Func<byte[], T> valueFactory, object asyncState)
         {
-            if (valueFactory == null)
-                throw new ArgumentNullException("valueFactory");
+            if (valueFactory == null) throw new ArgumentNullException("valueFactory");
 
             return this.Execute<T[]>(request.ToPayload(), (source, response) =>
             {

@@ -12,11 +12,6 @@ namespace Redis.Driver
         /// <param name="seqID"></param>
         void Enqueue(int seqID);
         /// <summary>
-        /// un enqueue
-        /// </summary>
-        /// <returns></returns>
-        int Unenqueue();
-        /// <summary>
         /// dequeue
         /// </summary>
         /// <returns></returns>

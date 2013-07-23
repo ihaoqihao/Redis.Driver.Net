@@ -8,7 +8,7 @@ namespace Redis.Driver
     public sealed class DefaultRedisReplyQueue : IRedisReplyQueue
     {
         #region Private Members
-        private readonly LinkedList<int> _list = new LinkedList<int>();
+        private readonly Queue<int> _innerQueue = new Queue<int>();
         #endregion
 
         #region IRedisReplyList Members
@@ -19,23 +19,7 @@ namespace Redis.Driver
         public void Enqueue(int seqID)
         {
             lock (this)
-                this._list.AddLast(seqID);
-        }
-        /// <summary>
-        /// un enqueue
-        /// </summary>
-        /// <returns></returns>
-        public int Unenqueue()
-        {
-            lock (this)
-                if (this._list.Count > 0)
-                {
-                    var node = this._list.Last;
-                    this._list.RemoveLast();
-                    return node.Value;
-                }
-
-            return -1;
+                this._innerQueue.Enqueue(seqID);
         }
         /// <summary>
         /// dequeue
@@ -44,13 +28,10 @@ namespace Redis.Driver
         public int Dequeue()
         {
             lock (this)
-                if (this._list.Count > 0)
-                {
-                    var node = this._list.First;
-                    this._list.RemoveFirst();
-                    return node.Value;
-                }
-
+            {
+                if (this._innerQueue.Count > 0)
+                    return this._innerQueue.Dequeue();
+            }
             return -1;
         }
         #endregion

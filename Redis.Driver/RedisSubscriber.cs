@@ -39,8 +39,7 @@ namespace Redis.Driver
         public RedisSubscriber(string connectionString)
             : base(1024, 1024)
         {
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException("connectionString");
+            if (string.IsNullOrEmpty(connectionString)) throw new ArgumentNullException("connectionString");
 
             var arr = connectionString.Split(':');
             this._endPoint = new IPEndPoint(IPAddress.Parse(arr[1].Substring(2)), int.Parse(arr[2]));
@@ -73,7 +72,6 @@ namespace Redis.Driver
                     TaskEx.Delay(new Random().Next(1000, 3000), this.BeginConnect);
                     return;
                 }
-
                 base.RegisterConnection(connection);
             });
         }
@@ -93,12 +91,10 @@ namespace Redis.Driver
         /// <param name="channels"></param>
         private void SubscribeInternal(string[] channels)
         {
-            if (channels == null || channels.Length == 0)
-                return;
+            if (channels == null || channels.Length == 0) return;
 
             var connection = this._currentConnection;
-            if (connection == null)
-                return;
+            if (connection == null) return;
 
             var r = new RedisRequest(channels.Length + 1).AddArgument("SUBSCRIBE");
             foreach (var channel in channels)
@@ -112,12 +108,10 @@ namespace Redis.Driver
         /// <param name="channels"></param>
         private void UnSubscribeInternal(string[] channels)
         {
-            if (channels == null || channels.Length == 0)
-                return;
+            if (channels == null || channels.Length == 0) return;
 
             var connection = this._currentConnection;
-            if (connection == null)
-                return;
+            if (connection == null) return;
 
             var r = new RedisRequest(channels.Length + 1).AddArgument("UNSUBSCRIBE");
             foreach (var channel in channels)
@@ -131,12 +125,10 @@ namespace Redis.Driver
         /// <param name="patterns"></param>
         private void PatternSubscribeInternal(string[] patterns)
         {
-            if (patterns == null || patterns.Length == 0)
-                return;
+            if (patterns == null || patterns.Length == 0) return;
 
             var connection = this._currentConnection;
-            if (connection == null)
-                return;
+            if (connection == null) return;
 
             var r = new RedisRequest(patterns.Length + 1).AddArgument("PSUBSCRIBE");
             foreach (var pattern in patterns)
@@ -150,12 +142,10 @@ namespace Redis.Driver
         /// <param name="patterns"></param>
         private void UnPatternSubscribeInternal(string[] patterns)
         {
-            if (patterns == null || patterns.Length == 0)
-                return;
+            if (patterns == null || patterns.Length == 0) return;
 
             var connection = this._currentConnection;
-            if (connection == null)
-                return;
+            if (connection == null) return;
 
             var r = new RedisRequest(patterns.Length + 1).AddArgument("PUNSUBSCRIBE");
             foreach (var pattern in patterns)
@@ -281,8 +271,7 @@ namespace Redis.Driver
         /// <param name="channels"></param>
         public void Subscribe(params string[] channels)
         {
-            if (channels == null || channels.Length == 0)
-                return;
+            if (channels == null || channels.Length == 0) return;
 
             lock (this)
             {
@@ -297,8 +286,7 @@ namespace Redis.Driver
         /// <param name="channels"></param>
         public void UnSubscribe(params string[] channels)
         {
-            if (channels == null || channels.Length == 0)
-                return;
+            if (channels == null || channels.Length == 0) return;
 
             lock (this)
             {
@@ -313,8 +301,7 @@ namespace Redis.Driver
         /// <param name="patterns"></param>
         public void PatternSubscribe(params string[] patterns)
         {
-            if (patterns == null || patterns.Length == 0)
-                return;
+            if (patterns == null || patterns.Length == 0) return;
 
             lock (this)
             {
@@ -329,8 +316,7 @@ namespace Redis.Driver
         /// <param name="patterns"></param>
         public void UnPatternSubscribe(params string[] patterns)
         {
-            if (patterns == null || patterns.Length == 0)
-                return;
+            if (patterns == null || patterns.Length == 0) return;
 
             lock (this)
             {
