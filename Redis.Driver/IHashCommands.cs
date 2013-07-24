@@ -26,7 +26,7 @@ namespace Redis.Driver
         /// <param name="fields"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        Task<long> Remove(string key, string[] fields, object asyncState = null);
+        Task<int> Remove(string key, string[] fields, object asyncState = null);
         /// <summary>
         /// Returns if field is an existing field in the hash stored at key.
         /// </summary>
@@ -43,24 +43,7 @@ namespace Redis.Driver
         /// <param name="field"></param>
         /// <param name="asyncState"></param>
         /// <returns>the value associated with field, or nil when field is not present in the hash or key does not exist.</returns>
-        Task<string> GetString(string key, string field, object asyncState = null);
-        /// <summary>
-        /// Returns the value associated with field in the hash stored at key.
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="field"></param>
-        /// <param name="asyncState"></param>
-        /// <returns>the value associated with field, or nil when field is not present in the hash or key does not exist.</returns>
         Task<byte[]> Get(string key, string field, object asyncState = null);
-        /// <summary>
-        /// Returns the values associated with the specified fields in the hash stored at key. 
-        /// For every field that does not exist in the hash, a nil value is returned.
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="fields"></param>
-        /// <param name="asyncState"></param>
-        /// <returns>list of values associated with the given fields, in the same order as they are requested.</returns>
-        Task<string[]> GetString(string key, string[] fields, object asyncState = null);
         /// <summary>
         /// Returns the values associated with the specified fields in the hash stored at key. 
         /// For every field that does not exist in the hash, a nil value is returned.

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Sodao.FastSocket.Client;
 using Sodao.FastSocket.SocketBase;
@@ -125,7 +126,7 @@ namespace Redis.Driver
                 {
                     if (c.IsFaulted) return null;
                     if (c.Result == null || c.Result.Length == 0) return new string[0];
-                    return c.Result.Select(p => System.Text.Encoding.UTF8.GetString(p)).ToArray();
+                    return c.Result.Select(p => Encoding.UTF8.GetString(p)).ToArray();
                 });
         }
         /// <summary>
@@ -219,9 +220,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">keys is null or empty.</exception>
         Task<byte[][]> IStringCommands.Get(string[] keys, object asyncState)
         {
-            if (keys == null || keys.Length == 0)
-                throw new ArgumentNullException("keys");
-
+            if (keys == null || keys.Length == 0) throw new ArgumentNullException("keys");
             return this.ExecuteMultiBytes(new RedisRequest(keys.Length + 1).AddArgument("MGET").AddArgument(keys), asyncState);
         }
         /// <summary>
@@ -236,9 +235,7 @@ namespace Redis.Driver
         /// <returns>list of values at the specified keys.</returns>
         Task<T[]> IStringCommands.Get<T>(string[] keys, Func<byte[], T> valueFactory, object asyncState)
         {
-            if (keys == null || keys.Length == 0)
-                throw new ArgumentNullException("keys");
-
+            if (keys == null || keys.Length == 0) throw new ArgumentNullException("keys");
             return this.ExecuteMultiBytes<T>(new RedisRequest(keys.Length + 1).AddArgument("MGET").AddArgument(keys), valueFactory, asyncState);
         }
         /// <summary>
@@ -277,11 +274,9 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">dic is null or empty.</exception>
         Task IStringCommands.Set(Dictionary<string, byte[]> dic, object asyncState)
         {
-            if (dic == null || dic.Count == 0)
-                throw new ArgumentNullException("dic", "dic is null or empty.");
+            if (dic == null || dic.Count == 0) throw new ArgumentNullException("dic", "dic is null or empty.");
 
-            var request = new RedisRequest(dic.Count + dic.Count + 1);
-            request.AddArgument("MSET");
+            var request = new RedisRequest(dic.Count + dic.Count + 1).AddArgument("MSET");
             foreach (var kv in dic)
                 request.AddArgument(kv.Key).AddArgument(kv.Value);
 
@@ -289,69 +284,125 @@ namespace Redis.Driver
         }
         #endregion
 
-        #region IHashCommands Members
+        #region IHashCommands 成员
+        /// <summary>
+        /// Removes the specified fields from the hash stored at key. 
+        /// Non-existing fields are ignored. Non-existing keys are treated as empty hashes and this command returns 0.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="field"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task<bool> IHashCommands.Remove(string key, string field, object asyncState)
+        {
+            return this.ExecuteBool(new RedisRequest(3).AddArgument("HDEL").AddArgument(key).AddArgument(field), asyncState);
+        }
+        /// <summary>
+        /// Removes the specified fields from the hash stored at key. 
+        /// Non-existing fields are ignored. Non-existing keys are treated as empty hashes and this command returns 0.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="fields"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">fields is null or empty.</exception>
+        Task<int> IHashCommands.Remove(string key, string[] fields, object asyncState)
+        {
+            if (fields == null || fields.Length == 0) throw new ArgumentNullException("fields is null or empty.");
 
-        public Task<bool> Remove(string key, string field, object asyncState = null)
+            var request = new RedisRequest(fields.Length + 2).AddArgument("HDEL").AddArgument(key);
+            for (int i = 0, l = fields.Length; i < l; i++)
+                request.AddArgument(fields[i]);
+
+            return this.ExecuteInt(request, asyncState);
+        }
+        /// <summary>
+        /// Returns if field is an existing field in the hash stored at key.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="field"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>1 if the hash contains field. 0 if the hash does not contain field, or key does not exist.</returns>
+        Task<bool> IHashCommands.Exists(string key, string field, object asyncState)
+        {
+            return this.ExecuteBool(new RedisRequest(3).AddArgument("HEXISTS").AddArgument(key).AddArgument(field), asyncState);
+        }
+        /// <summary>
+        /// Returns the value associated with field in the hash stored at key.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="field"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>the value associated with field, or nil when field is not present in the hash or key does not exist.</returns>
+        Task<byte[]> IHashCommands.Get(string key, string field, object asyncState)
+        {
+            return this.ExecuteBytes(new RedisRequest(3).AddArgument("HGET").AddArgument(key).AddArgument(field), asyncState);
+        }
+        /// <summary>
+        /// Returns the values associated with the specified fields in the hash stored at key. 
+        /// For every field that does not exist in the hash, a nil value is returned.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="fields"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>list of values associated with the given fields, in the same order as they are requested.</returns>
+        Task<byte[][]> IHashCommands.Get(string key, string[] fields, object asyncState)
+        {
+            if (fields == null || fields.Length == 0) throw new ArgumentNullException("fields is null or empty.");
+
+            var request = new RedisRequest(fields.Length + 2).AddArgument("HMGET").AddArgument(key);
+            for (int i = 0, l = fields.Length; i < l; i++)
+                request.AddArgument(fields[i]);
+
+            return this.ExecuteMultiBytes(request, asyncState);
+        }
+        /// <summary>
+        /// Returns all fields and values of the hash stored at key. 
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>list of fields and their values stored in the hash, or an empty list when key does not exist.</returns>
+        Task<Dictionary<string, byte[]>> IHashCommands.GetAll(string key, object asyncState)
+        {
+            return this.ExecuteMultiBytes(new RedisRequest(2).AddArgument("HGETALL").AddArgument(key), asyncState)
+                .ContinueWith(c =>
+                {
+                    if (c.IsFaulted) throw c.Exception.InnerException;
+                    if (c.Result.Length % 2 != 0) return new Dictionary<string, byte[]>(0);
+
+                    int count = c.Result.Length / 2;
+                    var dic = new Dictionary<string, byte[]>(count);
+                    for (int i = 0; i < count; )
+                    {
+                        dic[Encoding.UTF8.GetString(c.Result[i])] = c.Result[i + 1];
+                        i += 2;
+                    }
+
+                    return dic;
+                });
+        }
+
+        Task<bool> IHashCommands.Set(string key, string field, string value, object asyncState)
         {
             throw new NotImplementedException();
         }
 
-        public Task<long> Remove(string key, string[] fields, object asyncState = null)
+        Task<bool> IHashCommands.Set(string key, string field, byte[] value, object asyncState)
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> Exists(string key, string field, object asyncState = null)
+        Task IHashCommands.Set(string key, Dictionary<string, byte[]> values, object asyncState)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetString(string key, string field, object asyncState = null)
+        Task<bool> IHashCommands.SetIfNotExists(string key, string field, string value, object asyncState)
         {
             throw new NotImplementedException();
         }
 
-        public Task<byte[]> Get(string key, string field, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<string[]> GetString(string key, string[] fields, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<byte[][]> Get(string key, string[] fields, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Dictionary<string, byte[]>> GetAll(string key, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> Set(string key, string field, string value, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> Set(string key, string field, byte[] value, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task Set(string key, Dictionary<string, byte[]> values, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> SetIfNotExists(string key, string field, string value, object asyncState = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> SetIfNotExists(string key, string field, byte[] value, object asyncState = null)
+        Task<bool> IHashCommands.SetIfNotExists(string key, string field, byte[] value, object asyncState)
         {
             throw new NotImplementedException();
         }
@@ -416,6 +467,30 @@ namespace Redis.Driver
                 if (intReply != null)
                 {
                     source.TrySetResult(intReply.Value);
+                    return;
+                }
+                if (response.Reply is ErrorReply)
+                {
+                    source.TrySetException((response.Reply as ErrorReply).Error());
+                    return;
+                }
+                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+            }, asyncState);
+        }
+        /// <summary>
+        /// execute bool
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        private Task<bool> ExecuteBool(RedisRequest request, object asyncState)
+        {
+            return this.Execute<bool>(request.ToPayload(), (source, response) =>
+            {
+                var intReply = response.Reply as IntegerReply;
+                if (intReply != null)
+                {
+                    source.TrySetResult(intReply.Value == 1);
                     return;
                 }
                 if (response.Reply is ErrorReply)
@@ -498,10 +573,7 @@ namespace Redis.Driver
                         return;
                     }
 
-                    try
-                    {
-                        source.TrySetResult(valueFactory(mbReeply.Payload));
-                    }
+                    try { source.TrySetResult(valueFactory(mbReeply.Payload)); }
                     catch (Exception ex)
                     {
                         source.TrySetException(ex);
@@ -541,8 +613,7 @@ namespace Redis.Driver
                     for (int i = 0, l = mbReeply.Replies.Length; i < l; i++)
                     {
                         var objBulk = mbReeply.Replies[i] as BulkReplies;
-                        if (objBulk != null)
-                            arrBytes[i] = objBulk.Payload;
+                        if (objBulk != null) arrBytes[i] = objBulk.Payload;
                     }
                     source.TrySetResult(arrBytes);
                     return;
@@ -583,8 +654,7 @@ namespace Redis.Driver
                     for (int i = 0, l = mbReeply.Replies.Length; i < l; i++)
                     {
                         var objBulk = mbReeply.Replies[i] as BulkReplies;
-                        if (objBulk == null)
-                            continue;
+                        if (objBulk == null) continue;
 
                         if (objBulk.Payload == null || objBulk.Payload.Length == 0)
                         {
@@ -592,10 +662,7 @@ namespace Redis.Driver
                             continue;
                         }
 
-                        try
-                        {
-                            arrResults[i] = valueFactory(objBulk.Payload);
-                        }
+                        try { arrResults[i] = valueFactory(objBulk.Payload); }
                         catch (Exception ex)
                         {
                             source.TrySetException(ex);
