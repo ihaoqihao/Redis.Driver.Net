@@ -77,6 +77,16 @@ namespace Redis.Driver
             (connection.UserData as IRedisReplyQueue).Enqueue((packet as Request<RedisResponse>).SeqID);
             base.OnStartSending(connection, packet);
         }
+        /// <summary>
+        /// OnSendCallback
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="e"></param>
+        protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
+        {
+            if (e.Status != SendCallbackStatus.Success) connection.BeginDisconnect();
+            base.OnSendCallback(connection, e);
+        }
         #endregion
 
         #region IKeyCommands Members

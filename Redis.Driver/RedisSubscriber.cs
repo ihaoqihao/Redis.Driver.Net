@@ -82,8 +82,7 @@ namespace Redis.Driver
         /// <param name="payload"></param>
         private void OnListener(string channel, byte[] payload)
         {
-            if (this.Listener != null)
-                this.Listener(channel, payload);
+            if (this.Listener != null) this.Listener(channel, payload);
         }
         /// <summary>
         /// subscribe channel
@@ -97,8 +96,7 @@ namespace Redis.Driver
             if (connection == null) return;
 
             var r = new RedisRequest(channels.Length + 1).AddArgument("SUBSCRIBE");
-            foreach (var channel in channels)
-                r.AddArgument(channel);
+            foreach (var channel in channels) r.AddArgument(channel);
 
             connection.BeginSend(new Packet(r.ToPayload()));
         }
@@ -114,8 +112,7 @@ namespace Redis.Driver
             if (connection == null) return;
 
             var r = new RedisRequest(channels.Length + 1).AddArgument("UNSUBSCRIBE");
-            foreach (var channel in channels)
-                r.AddArgument(channel);
+            foreach (var channel in channels) r.AddArgument(channel);
 
             connection.BeginSend(new Packet(r.ToPayload()));
         }
@@ -131,8 +128,7 @@ namespace Redis.Driver
             if (connection == null) return;
 
             var r = new RedisRequest(patterns.Length + 1).AddArgument("PSUBSCRIBE");
-            foreach (var pattern in patterns)
-                r.AddArgument(pattern);
+            foreach (var pattern in patterns) r.AddArgument(pattern);
 
             connection.BeginSend(new Packet(r.ToPayload()));
         }
@@ -148,8 +144,7 @@ namespace Redis.Driver
             if (connection == null) return;
 
             var r = new RedisRequest(patterns.Length + 1).AddArgument("PUNSUBSCRIBE");
-            foreach (var pattern in patterns)
-                r.AddArgument(pattern);
+            foreach (var pattern in patterns) r.AddArgument(pattern);
 
             connection.BeginSend(new Packet(r.ToPayload()));
         }
@@ -179,34 +174,30 @@ namespace Redis.Driver
             }
 
             if (response != null)
+            {
                 ThreadPool.QueueUserWorkItem(c =>
                 {
                     var objMulti = response.Reply as MultiBulkReplies;
-                    if (objMulti == null || objMulti.Replies == null || objMulti.Replies.Length != 3)
-                        return;
+                    if (objMulti == null || objMulti.Replies == null || objMulti.Replies.Length != 3) return;
 
                     var objFlagBulk = objMulti.Replies[0] as BulkReplies;
-                    if (objFlagBulk == null || objFlagBulk.Payload == null)
-                        return;
+                    if (objFlagBulk == null || objFlagBulk.Payload == null) return;
 
                     try
                     {
-                        if (Encoding.UTF8.GetString(objFlagBulk.Payload) != "message")
-                            return;
+                        if (Encoding.UTF8.GetString(objFlagBulk.Payload) != "message") return;
 
                         var objChannelNameBulk = objMulti.Replies[1] as BulkReplies;
-                        if (objChannelNameBulk == null || objChannelNameBulk.Payload == null)
-                            return;
+                        if (objChannelNameBulk == null || objChannelNameBulk.Payload == null) return;
 
                         var objMessageBulk = objMulti.Replies[2] as BulkReplies;
-                        if (objMessageBulk == null || objMessageBulk.Payload == null)
-                            return;
+                        if (objMessageBulk == null || objMessageBulk.Payload == null) return;
 
                         this.OnListener(Encoding.UTF8.GetString(objChannelNameBulk.Payload), objMessageBulk.Payload);
                     }
                     catch { }
                 });
-
+            }
             e.SetReadlength(readLength);
         }
         /// <summary>
@@ -217,7 +208,6 @@ namespace Redis.Driver
         protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
         {
             base.OnSendCallback(connection, e);
-            //重发
             if (e.Status != SendCallbackStatus.Success && connection.Active)
                 connection.BeginSend(e.Packet);
         }
@@ -275,8 +265,7 @@ namespace Redis.Driver
 
             lock (this)
             {
-                foreach (var c in channels)
-                    this._setChannels.Add(c);
+                foreach (var c in channels) this._setChannels.Add(c);
             }
             this.SubscribeInternal(channels);
         }
@@ -290,8 +279,7 @@ namespace Redis.Driver
 
             lock (this)
             {
-                foreach (var c in channels)
-                    this._setChannels.Remove(c);
+                foreach (var c in channels) this._setChannels.Remove(c);
             }
             this.UnSubscribeInternal(channels);
         }
@@ -305,8 +293,7 @@ namespace Redis.Driver
 
             lock (this)
             {
-                foreach (var p in patterns)
-                    this._setPatterns.Add(p);
+                foreach (var p in patterns) this._setPatterns.Add(p);
             }
             this.PatternSubscribeInternal(patterns);
         }
@@ -320,8 +307,7 @@ namespace Redis.Driver
 
             lock (this)
             {
-                foreach (var p in patterns)
-                    this._setPatterns.Remove(p);
+                foreach (var p in patterns) this._setPatterns.Remove(p);
             }
             this.UnPatternSubscribeInternal(patterns);
         }

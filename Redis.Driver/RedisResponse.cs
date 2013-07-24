@@ -22,7 +22,6 @@ namespace Redis.Driver
         public RedisResponse(int seqID, IRedisReply reply)
         {
             if (reply == null) throw new ArgumentNullException("reply");
-
             this._seqID = seqID;
             this.Reply = reply;
         }

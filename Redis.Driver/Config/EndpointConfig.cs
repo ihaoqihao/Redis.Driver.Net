@@ -18,18 +18,16 @@ namespace Redis.Driver.Config
         }
         /// <summary>
         /// socket buffer size
-        /// default is 1024 byte
         /// </summary>
-        [ConfigurationProperty("socketBufferSize", IsRequired = false, DefaultValue = 1024)]
+        [ConfigurationProperty("socketBufferSize", IsRequired = false, DefaultValue = 8192)]
         public int SocketBufferSize
         {
             get { return (int)this["socketBufferSize"]; }
         }
         /// <summary>
         /// message buffer size
-        /// default is 1024 byte
         /// </summary>
-        [ConfigurationProperty("messageBufferSize", IsRequired = false, DefaultValue = 1024)]
+        [ConfigurationProperty("messageBufferSize", IsRequired = false, DefaultValue = 4096)]
         public int MessageBufferSize
         {
             get { return (int)this["messageBufferSize"]; }
@@ -37,7 +35,7 @@ namespace Redis.Driver.Config
         /// <summary>
         /// 发送超时值，毫秒单位
         /// </summary>
-        [ConfigurationProperty("millisecondsSendTimeout", IsRequired = false, DefaultValue = 5000)]
+        [ConfigurationProperty("millisecondsSendTimeout", IsRequired = false, DefaultValue = 3000)]
         public int MillisecondsSendTimeout
         {
             get { return (int)(this["millisecondsSendTimeout"]); }
@@ -45,7 +43,7 @@ namespace Redis.Driver.Config
         /// <summary>
         /// 接收超时值，毫秒单位
         /// </summary>
-        [ConfigurationProperty("millisecondsReceiveTimeout", IsRequired = false, DefaultValue = 5000)]
+        [ConfigurationProperty("millisecondsReceiveTimeout", IsRequired = false, DefaultValue = 3000)]
         public int MillisecondsReceiveTimeout
         {
             get { return (int)(this["millisecondsReceiveTimeout"]); }
