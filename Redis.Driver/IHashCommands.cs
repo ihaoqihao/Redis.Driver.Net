@@ -11,21 +11,27 @@ namespace Redis.Driver
     {
         /// <summary>
         /// Removes the specified fields from the hash stored at key. 
-        /// Non-existing fields are ignored. Non-existing keys are treated as empty hashes and this command returns 0.
+        /// Specified fields that do not exist within this hash are ignored. 
+        /// If key does not exist, it is treated as an empty hash and this command returns 0.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="field"></param>
         /// <param name="asyncState"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// the number of fields that were removed from the hash, not including specified but non existing fields.
+        /// </returns>
         Task<bool> Remove(string key, string field, object asyncState = null);
         /// <summary>
         /// Removes the specified fields from the hash stored at key. 
-        /// Non-existing fields are ignored. Non-existing keys are treated as empty hashes and this command returns 0.
+        /// Specified fields that do not exist within this hash are ignored. 
+        /// If key does not exist, it is treated as an empty hash and this command returns 0.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="fields"></param>
         /// <param name="asyncState"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// the number of fields that were removed from the hash, not including specified but non existing fields.
+        /// </returns>
         Task<int> Remove(string key, string[] fields, object asyncState = null);
         /// <summary>
         /// Returns if field is an existing field in the hash stored at key.
@@ -33,7 +39,10 @@ namespace Redis.Driver
         /// <param name="key"></param>
         /// <param name="field"></param>
         /// <param name="asyncState"></param>
-        /// <returns>1 if the hash contains field. 0 if the hash does not contain field, or key does not exist.</returns>
+        /// <returns>
+        /// 1 if the hash contains field. 
+        /// 0 if the hash does not contain field, or key does not exist.
+        /// </returns>
         Task<bool> Exists(string key, string field, object asyncState = null);
 
         /// <summary>
@@ -42,7 +51,10 @@ namespace Redis.Driver
         /// <param name="key"></param>
         /// <param name="field"></param>
         /// <param name="asyncState"></param>
-        /// <returns>the value associated with field, or nil when field is not present in the hash or key does not exist.</returns>
+        /// <returns>
+        /// the value associated with field, 
+        /// or nil when field is not present in the hash or key does not exist.
+        /// </returns>
         Task<byte[]> Get(string key, string field, object asyncState = null);
         /// <summary>
         /// Returns the values associated with the specified fields in the hash stored at key. 
@@ -74,7 +86,7 @@ namespace Redis.Driver
         /// 1 if field is a new field in the hash and value was set. 
         /// 0 if field already exists in the hash and the value was updated.
         /// </returns>
-        Task<bool> Set(string key, string field, string value, object asyncState = null);
+        Task<int> Set(string key, string field, string value, object asyncState = null);
         /// <summary>
         /// Sets field in the hash stored at key to value. 
         /// If key does not exist, a new key holding a hash is created.
@@ -88,7 +100,7 @@ namespace Redis.Driver
         /// 1 if field is a new field in the hash and value was set. 
         /// 0 if field already exists in the hash and the value was updated.
         /// </returns>
-        Task<bool> Set(string key, string field, byte[] value, object asyncState = null);
+        Task<int> Set(string key, string field, byte[] value, object asyncState = null);
         /// <summary>
         /// Sets the specified fields to their respective values in the hash stored at key. 
         /// This command overwrites any existing fields in the hash. 
@@ -114,7 +126,7 @@ namespace Redis.Driver
         /// 1 if field is a new field in the hash and value was set. 
         /// 0 if field already exists in the hash and no operation was performed.
         /// </returns>
-        Task<bool> SetIfNotExists(string key, string field, string value, object asyncState = null);
+        Task<int> SetIfNotExists(string key, string field, string value, object asyncState = null);
         /// <summary>
         /// Sets field in the hash stored at key to value, only if field does not yet exist. 
         /// If key does not exist, a new key holding a hash is created. 
@@ -128,6 +140,6 @@ namespace Redis.Driver
         /// 1 if field is a new field in the hash and value was set. 
         /// 0 if field already exists in the hash and no operation was performed.
         /// </returns>
-        Task<bool> SetIfNotExists(string key, string field, byte[] value, object asyncState = null);
+        Task<int> SetIfNotExists(string key, string field, byte[] value, object asyncState = null);
     }
 }

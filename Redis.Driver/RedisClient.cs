@@ -99,7 +99,7 @@ namespace Redis.Driver
         /// <returns>The number of keys that were removed.</returns>
         Task<int> IKeyCommands.Del(string key, object asyncState)
         {
-            return this.ExecuteInt(new RedisRequest(2).AddArgument("DEL").AddArgument(key), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(2).AddArgument("DEL").AddArgument(key), asyncState);
         }
         /// <summary>
         /// Removes the specified keys. A key is ignored if it does not exist.
@@ -111,7 +111,7 @@ namespace Redis.Driver
         Task<int> IKeyCommands.Del(string[] keys, object asyncState)
         {
             if (keys == null || keys.Length == 0) throw new ArgumentNullException("keys", "keys is null or empty.");
-            return this.ExecuteInt(new RedisRequest(keys.Length + 1).AddArgument("DEL").AddArgument(keys), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(keys.Length + 1).AddArgument("DEL").AddArgument(keys), asyncState);
         }
         /// <summary>
         /// Returns all keys matching pattern.
@@ -121,7 +121,7 @@ namespace Redis.Driver
         /// <returns>list of keys matching pattern.</returns>
         Task<string[]> IKeyCommands.Keys(string pattern, object asyncState)
         {
-            return this.ExecuteMultiBytes(new RedisRequest(2).AddArgument("KEYS").AddArgument(pattern), asyncState)
+            return this.ExecuteMultiBulkReplies(new RedisRequest(2).AddArgument("KEYS").AddArgument(pattern), asyncState)
                 .ContinueWith(c =>
                 {
                     if (c.IsFaulted) return null;
@@ -139,7 +139,7 @@ namespace Redis.Driver
         /// <returns></returns>
         public Task Expire(string key, int seconds, object asyncState = null)
         {
-            return this.ExecuteInt(new RedisRequest(3).AddArgument("EXPIRE").AddArgument(key).AddArgument(seconds), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("EXPIRE").AddArgument(key).AddArgument(seconds), asyncState);
         }
         #endregion
 
@@ -155,7 +155,7 @@ namespace Redis.Driver
         /// <returns>the length of the string after the append operation.</returns>
         Task<int> IStringCommands.Append(string key, string value, object asyncState)
         {
-            return this.ExecuteInt(new RedisRequest(3).AddArgument("APPEND").AddArgument(key).AddArgument(value), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("APPEND").AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
         /// If key already exists and is a string, 
@@ -168,7 +168,7 @@ namespace Redis.Driver
         /// <returns>the length of the string after the append operation.</returns>
         Task<int> IStringCommands.Append(string key, byte[] value, object asyncState)
         {
-            return this.ExecuteInt(new RedisRequest(3).AddArgument("APPEND").AddArgument(key).AddArgument(value), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("APPEND").AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
         /// When offset is beyond the string length, 
@@ -181,7 +181,7 @@ namespace Redis.Driver
         /// <returns>Returns the bit value at offset in the string value stored at key.</returns>
         Task<int> IStringCommands.GetBit(string key, int offset, object asyncState)
         {
-            return this.ExecuteInt(new RedisRequest(3).AddArgument("GETBIT").AddArgument(key).AddArgument(offset), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("GETBIT").AddArgument(key).AddArgument(offset), asyncState);
         }
         /// <summary>
         /// Get the value of key. 
@@ -193,7 +193,7 @@ namespace Redis.Driver
         /// <returns>the value of key, or nil when key does not exist.</returns>
         Task<byte[]> IStringCommands.Get(string key, object asyncState)
         {
-            return this.ExecuteBytes(new RedisRequest(2).AddArgument("GET").AddArgument(key), asyncState);
+            return this.ExecuteBulkReplies(new RedisRequest(2).AddArgument("GET").AddArgument(key), asyncState);
         }
         /// <summary>
         /// Get the value of key. 
@@ -207,7 +207,7 @@ namespace Redis.Driver
         /// <returns>the value of key, or nil when key does not exist.</returns>
         Task<T> IStringCommands.Get<T>(string key, Func<byte[], T> valueFactory, object asyncState)
         {
-            return this.ExecuteBytes<T>(new RedisRequest(2).AddArgument("GET").AddArgument(key), valueFactory, asyncState);
+            return this.ExecuteBulkReplies<T>(new RedisRequest(2).AddArgument("GET").AddArgument(key), valueFactory, asyncState);
         }
         /// <summary>
         /// Returns the values of all specified keys. 
@@ -221,7 +221,7 @@ namespace Redis.Driver
         Task<byte[][]> IStringCommands.Get(string[] keys, object asyncState)
         {
             if (keys == null || keys.Length == 0) throw new ArgumentNullException("keys");
-            return this.ExecuteMultiBytes(new RedisRequest(keys.Length + 1).AddArgument("MGET").AddArgument(keys), asyncState);
+            return this.ExecuteMultiBulkReplies(new RedisRequest(keys.Length + 1).AddArgument("MGET").AddArgument(keys), asyncState);
         }
         /// <summary>
         /// Returns the values of all specified keys. 
@@ -236,7 +236,7 @@ namespace Redis.Driver
         Task<T[]> IStringCommands.Get<T>(string[] keys, Func<byte[], T> valueFactory, object asyncState)
         {
             if (keys == null || keys.Length == 0) throw new ArgumentNullException("keys");
-            return this.ExecuteMultiBytes<T>(new RedisRequest(keys.Length + 1).AddArgument("MGET").AddArgument(keys), valueFactory, asyncState);
+            return this.ExecuteMultiBulkReplies<T>(new RedisRequest(keys.Length + 1).AddArgument("MGET").AddArgument(keys), valueFactory, asyncState);
         }
         /// <summary>
         /// Set key to hold the string value. 
@@ -248,7 +248,7 @@ namespace Redis.Driver
         /// <returns>always OK since SET can't fail.</returns>
         Task IStringCommands.Set(string key, string value, object asyncState)
         {
-            return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET").AddArgument(key).AddArgument(value), asyncState);
+            return this.ExecuteStatusReply(new RedisRequest(3).AddArgument("SET").AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
         /// Set key to hold the string value. 
@@ -260,7 +260,7 @@ namespace Redis.Driver
         /// <returns>always OK since SET can't fail.</returns>
         Task IStringCommands.Set(string key, byte[] value, object asyncState)
         {
-            return this.ExecuteStatus(new RedisRequest(3).AddArgument("SET").AddArgument(key).AddArgument(value), asyncState);
+            return this.ExecuteStatusReply(new RedisRequest(3).AddArgument("SET").AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
         /// Sets the given keys to their respective values. 
@@ -280,31 +280,37 @@ namespace Redis.Driver
             foreach (var kv in dic)
                 request.AddArgument(kv.Key).AddArgument(kv.Value);
 
-            return this.ExecuteStatus(request, asyncState);
+            return this.ExecuteStatusReply(request, asyncState);
         }
         #endregion
 
-        #region IHashCommands 成员
+        #region IHashCommands Members
         /// <summary>
         /// Removes the specified fields from the hash stored at key. 
-        /// Non-existing fields are ignored. Non-existing keys are treated as empty hashes and this command returns 0.
+        /// Specified fields that do not exist within this hash are ignored. 
+        /// If key does not exist, it is treated as an empty hash and this command returns 0.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="field"></param>
         /// <param name="asyncState"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// the number of fields that were removed from the hash, not including specified but non existing fields.
+        /// </returns>
         Task<bool> IHashCommands.Remove(string key, string field, object asyncState)
         {
-            return this.ExecuteBool(new RedisRequest(3).AddArgument("HDEL").AddArgument(key).AddArgument(field), asyncState);
+            return this.ExecuteIntegerReply2(new RedisRequest(3).AddArgument("HDEL").AddArgument(key).AddArgument(field), asyncState);
         }
         /// <summary>
         /// Removes the specified fields from the hash stored at key. 
-        /// Non-existing fields are ignored. Non-existing keys are treated as empty hashes and this command returns 0.
+        /// Specified fields that do not exist within this hash are ignored. 
+        /// If key does not exist, it is treated as an empty hash and this command returns 0.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="fields"></param>
         /// <param name="asyncState"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// the number of fields that were removed from the hash, not including specified but non existing fields.
+        /// </returns>
         /// <exception cref="ArgumentNullException">fields is null or empty.</exception>
         Task<int> IHashCommands.Remove(string key, string[] fields, object asyncState)
         {
@@ -314,7 +320,7 @@ namespace Redis.Driver
             for (int i = 0, l = fields.Length; i < l; i++)
                 request.AddArgument(fields[i]);
 
-            return this.ExecuteInt(request, asyncState);
+            return this.ExecuteIntegerReply(request, asyncState);
         }
         /// <summary>
         /// Returns if field is an existing field in the hash stored at key.
@@ -322,10 +328,13 @@ namespace Redis.Driver
         /// <param name="key"></param>
         /// <param name="field"></param>
         /// <param name="asyncState"></param>
-        /// <returns>1 if the hash contains field. 0 if the hash does not contain field, or key does not exist.</returns>
+        /// <returns>
+        /// 1 if the hash contains field. 
+        /// 0 if the hash does not contain field, or key does not exist.
+        /// </returns>
         Task<bool> IHashCommands.Exists(string key, string field, object asyncState)
         {
-            return this.ExecuteBool(new RedisRequest(3).AddArgument("HEXISTS").AddArgument(key).AddArgument(field), asyncState);
+            return this.ExecuteIntegerReply2(new RedisRequest(3).AddArgument("HEXISTS").AddArgument(key).AddArgument(field), asyncState);
         }
         /// <summary>
         /// Returns the value associated with field in the hash stored at key.
@@ -333,10 +342,13 @@ namespace Redis.Driver
         /// <param name="key"></param>
         /// <param name="field"></param>
         /// <param name="asyncState"></param>
-        /// <returns>the value associated with field, or nil when field is not present in the hash or key does not exist.</returns>
+        /// <returns>
+        /// the value associated with field, 
+        /// or nil when field is not present in the hash or key does not exist.
+        /// </returns>
         Task<byte[]> IHashCommands.Get(string key, string field, object asyncState)
         {
-            return this.ExecuteBytes(new RedisRequest(3).AddArgument("HGET").AddArgument(key).AddArgument(field), asyncState);
+            return this.ExecuteBulkReplies(new RedisRequest(3).AddArgument("HGET").AddArgument(key).AddArgument(field), asyncState);
         }
         /// <summary>
         /// Returns the values associated with the specified fields in the hash stored at key. 
@@ -354,7 +366,7 @@ namespace Redis.Driver
             for (int i = 0, l = fields.Length; i < l; i++)
                 request.AddArgument(fields[i]);
 
-            return this.ExecuteMultiBytes(request, asyncState);
+            return this.ExecuteMultiBulkReplies(request, asyncState);
         }
         /// <summary>
         /// Returns all fields and values of the hash stored at key. 
@@ -364,11 +376,10 @@ namespace Redis.Driver
         /// <returns>list of fields and their values stored in the hash, or an empty list when key does not exist.</returns>
         Task<Dictionary<string, byte[]>> IHashCommands.GetAll(string key, object asyncState)
         {
-            return this.ExecuteMultiBytes(new RedisRequest(2).AddArgument("HGETALL").AddArgument(key), asyncState)
+            return this.ExecuteMultiBulkReplies(new RedisRequest(2).AddArgument("HGETALL").AddArgument(key), asyncState)
                 .ContinueWith(c =>
                 {
                     if (c.IsFaulted) throw c.Exception.InnerException;
-                    if (c.Result.Length % 2 != 0) return new Dictionary<string, byte[]>(0);
 
                     int count = c.Result.Length / 2;
                     var dic = new Dictionary<string, byte[]>(count);
@@ -381,32 +392,88 @@ namespace Redis.Driver
                     return dic;
                 });
         }
-
-        Task<bool> IHashCommands.Set(string key, string field, string value, object asyncState)
+        /// <summary>
+        /// Sets field in the hash stored at key to value. 
+        /// If key does not exist, a new key holding a hash is created. 
+        /// If field already exists in the hash, it is overwritten.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="field"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>
+        /// 1 if field is a new field in the hash and value was set. 
+        /// 0 if field already exists in the hash and the value was updated.
+        /// </returns>
+        Task<int> IHashCommands.Set(string key, string field, string value, object asyncState)
         {
-            throw new NotImplementedException();
+            return this.ExecuteIntegerReply(new RedisRequest(4).AddArgument("HSET")
+                .AddArgument(key).AddArgument(field).AddArgument(value), asyncState);
         }
-
-        Task<bool> IHashCommands.Set(string key, string field, byte[] value, object asyncState)
+        /// <summary>
+        /// Sets field in the hash stored at key to value. 
+        /// If key does not exist, a new key holding a hash is created.
+        /// If field already exists in the hash, it is overwritten.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="field"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>
+        /// 1 if field is a new field in the hash and value was set. 
+        /// 0 if field already exists in the hash and the value was updated.
+        /// </returns>
+        Task<int> IHashCommands.Set(string key, string field, byte[] value, object asyncState)
         {
-            throw new NotImplementedException();
+            return this.ExecuteIntegerReply(new RedisRequest(4).AddArgument("HSET")
+                .AddArgument(key).AddArgument(field).AddArgument(value), asyncState);
         }
-
+        /// <summary>
+        /// Sets the specified fields to their respective values in the hash stored at key. 
+        /// This command overwrites any existing fields in the hash. If key does not exist, a new key holding a hash is created.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="values"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
         Task IHashCommands.Set(string key, Dictionary<string, byte[]> values, object asyncState)
         {
-            throw new NotImplementedException();
-        }
+            if (values == null || values.Count == 0) throw new ArgumentNullException("values is null or empty.");
 
-        Task<bool> IHashCommands.SetIfNotExists(string key, string field, string value, object asyncState)
+            var request = new RedisRequest(2 + values.Count * 2).AddArgument("HMSET").AddArgument(key);
+            foreach (var child in values) request.AddArgument(child.Key).AddArgument(child.Value);
+            return this.ExecuteStatusReply(request, asyncState);
+        }
+        /// <summary>
+        /// Sets field in the hash stored at key to value, only if field does not yet exist. 
+        /// If key does not exist, a new key holding a hash is created. 
+        /// If field already exists, this operation has no effect.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="field"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task<int> IHashCommands.SetIfNotExists(string key, string field, string value, object asyncState)
         {
-            throw new NotImplementedException();
+            return this.ExecuteIntegerReply(new RedisRequest(4).AddArgument("HSETNX")
+                .AddArgument(key).AddArgument(field).AddArgument(value), asyncState);
         }
-
-        Task<bool> IHashCommands.SetIfNotExists(string key, string field, byte[] value, object asyncState)
+        /// <summary>
+        /// Sets field in the hash stored at key to value, only if field does not yet exist. 
+        /// If key does not exist, a new key holding a hash is created. 
+        /// If field already exists, this operation has no effect.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="field"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task<int> IHashCommands.SetIfNotExists(string key, string field, byte[] value, object asyncState)
         {
-            throw new NotImplementedException();
+            return this.ExecuteIntegerReply(new RedisRequest(4).AddArgument("HSETNX")
+                .AddArgument(key).AddArgument(field).AddArgument(value), asyncState);
         }
-
         #endregion
 
         #region Pub/Sub Members
@@ -419,7 +486,7 @@ namespace Redis.Driver
         /// <returns></returns>
         public Task<int> Publish(string channel, string message, object asyncState = null)
         {
-            return this.ExecuteInt(new RedisRequest(3).AddArgument("PUBLISH").AddArgument(channel).AddArgument(message), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("PUBLISH").AddArgument(channel).AddArgument(message), asyncState);
         }
         /// <summary>
         /// Posts a message to the given channel.
@@ -430,7 +497,7 @@ namespace Redis.Driver
         /// <returns></returns>
         public Task<int> Publish(string channel, byte[] message, object asyncState = null)
         {
-            return this.ExecuteInt(new RedisRequest(3).AddArgument("PUBLISH").AddArgument(channel).AddArgument(message), asyncState);
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("PUBLISH").AddArgument(channel).AddArgument(message), asyncState);
         }
         #endregion
 
@@ -454,12 +521,12 @@ namespace Redis.Driver
             return source.Task;
         }
         /// <summary>
-        /// execute int
+        /// ExecuteIntegerReply
         /// </summary>
         /// <param name="request"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<int> ExecuteInt(RedisRequest request, object asyncState)
+        private Task<int> ExecuteIntegerReply(RedisRequest request, object asyncState)
         {
             return this.Execute<int>(request.ToPayload(), (source, response) =>
             {
@@ -478,12 +545,12 @@ namespace Redis.Driver
             }, asyncState);
         }
         /// <summary>
-        /// execute bool
+        /// ExecuteIntegerReply2
         /// </summary>
         /// <param name="request"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<bool> ExecuteBool(RedisRequest request, object asyncState)
+        private Task<bool> ExecuteIntegerReply2(RedisRequest request, object asyncState)
         {
             return this.Execute<bool>(request.ToPayload(), (source, response) =>
             {
@@ -502,12 +569,12 @@ namespace Redis.Driver
             }, asyncState);
         }
         /// <summary>
-        /// execute status
+        /// ExecuteStatusReply
         /// </summary>
         /// <param name="request"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<string> ExecuteStatus(RedisRequest request, object asyncState)
+        private Task<string> ExecuteStatusReply(RedisRequest request, object asyncState)
         {
             return this.Execute<string>(request.ToPayload(), (source, response) =>
             {
@@ -526,12 +593,12 @@ namespace Redis.Driver
             }, asyncState);
         }
         /// <summary>
-        /// execute bytes
+        /// ExecuteBulkReplies
         /// </summary>
         /// <param name="request"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<byte[]> ExecuteBytes(RedisRequest request, object asyncState)
+        private Task<byte[]> ExecuteBulkReplies(RedisRequest request, object asyncState)
         {
             return this.Execute<byte[]>(request.ToPayload(), (source, response) =>
             {
@@ -550,7 +617,7 @@ namespace Redis.Driver
             }, asyncState);
         }
         /// <summary>
-        /// execute bytes
+        /// ExecuteBulkReplies
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="request"></param>
@@ -558,7 +625,7 @@ namespace Redis.Driver
         /// <param name="asyncState"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">valueFactory is null.</exception>
-        private Task<T> ExecuteBytes<T>(RedisRequest request, Func<byte[], T> valueFactory, object asyncState)
+        private Task<T> ExecuteBulkReplies<T>(RedisRequest request, Func<byte[], T> valueFactory, object asyncState)
         {
             if (valueFactory == null) throw new ArgumentNullException("valueFactory");
 
@@ -591,12 +658,12 @@ namespace Redis.Driver
             }, asyncState);
         }
         /// <summary>
-        /// execute multi bytes
+        /// ExecuteMultiBulkReplies
         /// </summary>
         /// <param name="request"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        private Task<byte[][]> ExecuteMultiBytes(RedisRequest request, object asyncState)
+        private Task<byte[][]> ExecuteMultiBulkReplies(RedisRequest request, object asyncState)
         {
             return this.Execute<byte[][]>(request.ToPayload(), (source, response) =>
             {
@@ -627,7 +694,7 @@ namespace Redis.Driver
             }, asyncState);
         }
         /// <summary>
-        /// execute multi bytes
+        /// ExecuteMultiBulkReplies
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="request"></param>
@@ -635,7 +702,7 @@ namespace Redis.Driver
         /// <param name="asyncState"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">valueFactory is null.</exception>
-        private Task<T[]> ExecuteMultiBytes<T>(RedisRequest request, Func<byte[], T> valueFactory, object asyncState)
+        private Task<T[]> ExecuteMultiBulkReplies<T>(RedisRequest request, Func<byte[], T> valueFactory, object asyncState)
         {
             if (valueFactory == null) throw new ArgumentNullException("valueFactory");
 
