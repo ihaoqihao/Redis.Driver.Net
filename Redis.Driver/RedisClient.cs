@@ -671,7 +671,7 @@ namespace Redis.Driver
                 {
                     if (mbReeply.Replies == null)
                     {
-                        source.TrySetResult(null);
+                        source.TrySetResult(new byte[0][]);
                         return;
                     }
 

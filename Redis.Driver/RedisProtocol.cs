@@ -175,7 +175,7 @@ namespace Redis.Driver
 
             if (prefixed.Value < 1)
             {
-                readlength = 5;
+                readlength = 4;
                 if (readlength > buffer.Count)
                 {
                     readlength = 0;

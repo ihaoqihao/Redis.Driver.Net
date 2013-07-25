@@ -32,7 +32,7 @@ namespace Tests
         public void GetAll()
         {
             var client = Redis.Driver.RedisClientFactory.Get("test1");
-            var dic = client.Hashes.GetAll("key1").Result;
+            var dic = client.Hashes.GetAll("key12").Result;
             foreach (var child in dic)
             {
                 Console.WriteLine(child.Key);
