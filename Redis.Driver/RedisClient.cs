@@ -381,9 +381,8 @@ namespace Redis.Driver
                 {
                     if (c.IsFaulted) throw c.Exception.InnerException;
 
-                    int count = c.Result.Length / 2;
-                    var dic = new Dictionary<string, byte[]>(count);
-                    for (int i = 0; i < count; )
+                    var dic = new Dictionary<string, byte[]>(c.Result.Length / 2);
+                    for (int i = 0, l = c.Result.Length; i < l; )
                     {
                         dic[Encoding.UTF8.GetString(c.Result[i])] = c.Result[i + 1];
                         i += 2;
