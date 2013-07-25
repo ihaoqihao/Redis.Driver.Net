@@ -39,7 +39,7 @@
     </Reference>
     <Reference Include="FastSocket.SocketBase_1.0, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\fastsocket_base.1.0.0.7\lib\net40\FastSocket.SocketBase_1.0.dll</HintPath>
+      <HintPath>..\packages\fastsocket_base.1.0.0.8\lib\net40\FastSocket.SocketBase_1.0.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
