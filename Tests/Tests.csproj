@@ -47,6 +47,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Hash.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Strings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
