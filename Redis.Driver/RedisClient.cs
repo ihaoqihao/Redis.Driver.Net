@@ -363,9 +363,7 @@ namespace Redis.Driver
             if (fields == null || fields.Length == 0) throw new ArgumentNullException("fields is null or empty.");
 
             var request = new RedisRequest(fields.Length + 2).AddArgument("HMGET").AddArgument(key);
-            for (int i = 0, l = fields.Length; i < l; i++)
-                request.AddArgument(fields[i]);
-
+            for (int i = 0, l = fields.Length; i < l; i++) request.AddArgument(fields[i]);
             return this.ExecuteMultiBulkReplies(request, asyncState);
         }
         /// <summary>
@@ -540,7 +538,7 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+                source.TrySetException(new RedisException("Failed to resolve the integerReply"));
             }, asyncState);
         }
         /// <summary>
@@ -564,7 +562,7 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+                source.TrySetException(new RedisException("Failed to resolve the integerReply"));
             }, asyncState);
         }
         /// <summary>
@@ -588,7 +586,7 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+                source.TrySetException(new RedisException("Failed to resolve the statusReply"));
             }, asyncState);
         }
         /// <summary>
@@ -612,7 +610,7 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+                source.TrySetException(new RedisException("Failed to resolve the bulkReplies"));
             }, asyncState);
         }
         /// <summary>
@@ -653,7 +651,7 @@ namespace Redis.Driver
                     return;
                 }
 
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+                source.TrySetException(new RedisException("Failed to resolve the bulkReplies"));
             }, asyncState);
         }
         /// <summary>
@@ -689,7 +687,7 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+                source.TrySetException(new RedisException("Failed to resolve the multiBulkReplies."));
             }, asyncState);
         }
         /// <summary>
@@ -743,7 +741,7 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the Reply"));
+                source.TrySetException(new RedisException("Failed to resolve the multiBulkReplies."));
             }, asyncState);
         }
         #endregion
