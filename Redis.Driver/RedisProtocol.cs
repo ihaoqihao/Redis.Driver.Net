@@ -96,18 +96,9 @@ namespace Redis.Driver
         private IntegerReply FindInteger(ArraySegment<byte> buffer, out int readlength)
         {
             var prefixed = GetPrefixedLength(buffer);
-            if (prefixed.OverIndex == -1)
-            {
-                readlength = 0;
-                return null;
-            }
+            if (prefixed.OverIndex == -1) { readlength = 0; return null; }
 
             readlength = prefixed.OverIndex + 1 - buffer.Offset;
-            if (readlength > buffer.Count)
-            {
-                readlength = 0;
-                return null;
-            }
             return new IntegerReply(prefixed.Value);
         }
         /// <summary>
@@ -120,20 +111,11 @@ namespace Redis.Driver
         {
             //find bulk length
             var prefixed = GetPrefixedLength(buffer);
-            if (prefixed.OverIndex == -1)
-            {
-                readlength = 0;
-                return null;
-            }
+            if (prefixed.OverIndex == -1) { readlength = 0; return null; }
 
             if (prefixed.Value < 1)
             {
                 readlength = prefixed.OverIndex + 1 - buffer.Offset;
-                if (readlength > buffer.Count)
-                {
-                    readlength = 0;
-                    return null;
-                }
                 return new BulkReplies(null);
             }
 
@@ -161,13 +143,13 @@ namespace Redis.Driver
 
             if (prefixed.Value < 1)
             {
-                readlength = 4;
-                if (readlength > buffer.Count) { readlength = 0; return null; }
+                readlength = prefixed.OverIndex + 1 - buffer.Offset;
                 return new MultiBulkReplies(null);
             }
 
-            var bulkBuffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + prefixed.OverIndex + 1, buffer.Count - prefixed.OverIndex - 1);
-            if (bulkBuffer.Count < 1) { readlength = 0; return null; }
+            var bulkCount = buffer.Count - (prefixed.OverIndex + 1 - buffer.Offset);
+            if (bulkCount < 1) { readlength = 0; return null; }
+            var bulkBuffer = new ArraySegment<byte>(buffer.Array, prefixed.OverIndex + 1, bulkCount);
 
             var replies = new IRedisReply[prefixed.Value];
             int childReadLength = 0;
@@ -188,12 +170,13 @@ namespace Redis.Driver
 
                 if (i < l - 1)
                 {
-                    bulkBuffer = new ArraySegment<byte>(buffer.Array, bulkBuffer.Offset + childReadLength, bulkBuffer.Count - childReadLength);
-                    if (bulkBuffer.Count < 1) { readlength = 0; return null; }
+                    var childBulkCount = bulkBuffer.Count - childReadLength;
+                    if (childBulkCount < 1) { readlength = 0; return null; }
+                    bulkBuffer = new ArraySegment<byte>(buffer.Array, bulkBuffer.Offset + childReadLength, childBulkCount);
                 }
             }
 
-            readlength = bulkBuffer.Offset - buffer.Offset + childReadLength;
+            readlength = bulkBuffer.Offset + childReadLength - buffer.Offset;
             return new MultiBulkReplies(replies);
         }
         #endregion
@@ -208,13 +191,15 @@ namespace Redis.Driver
         {
             if (buffer.Count < 2) return new PrefixedLength(-1, -1);
 
-            bool isNegativeValue = buffer.Array[buffer.Offset + 1] == 45;//'-' is 45
-            int start = isNegativeValue ? buffer.Offset + 2 : buffer.Offset + 1;
+            bool isNegative = buffer.Array[buffer.Offset + 1] == 45;//'-' is 45
+            int start = isNegative ? buffer.Offset + 2 : buffer.Offset + 1;
 
             int intValue = 0;
             for (int i = start, l = buffer.Offset + buffer.Count; i < l; i++)
             {
-                if (buffer.Array[i] == 13) return new PrefixedLength(i + 1, isNegativeValue ? -intValue : intValue);
+                if (buffer.Array[i] == 13 && i + 1 < l && buffer.Array[i + 1] == 10)
+                    return new PrefixedLength(i + 1, isNegative ? -intValue : intValue);
+
                 intValue = intValue * 10 + (buffer.Array[i] - 48);//'0' is 48
             }
 
