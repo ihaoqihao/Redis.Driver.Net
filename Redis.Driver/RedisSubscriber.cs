@@ -66,14 +66,54 @@ namespace Redis.Driver
         {
             SocketConnector.BeginConnect(this._endPoint, this, connection =>
             {
-                if (connection == null)
-                {
-                    //延时重连
-                    TaskEx.Delay(new Random().Next(1000, 3000), this.BeginConnect);
-                    return;
-                }
-                base.RegisterConnection(connection);
+                if (connection == null) TaskEx.Delay(new Random().Next(1000, 3000), this.BeginConnect);
+                else base.RegisterConnection(connection);
             });
+        }
+        /// <summary>
+        /// on reponse
+        /// </summary>
+        /// <param name="response"></param>
+        private void OnResponse(RedisResponse response)
+        {
+            if (response == null) return;
+
+            var objMulti = response.Reply as MultiBulkReplies;
+            if (objMulti == null || objMulti.Replies == null || objMulti.Replies.Length == 0) return;
+
+            var objFlag = objMulti.Replies[0] as BulkReplies;
+            if (objFlag == null || objFlag.Payload == null || objFlag.Payload.Length == 0) return;
+
+            switch (Encoding.UTF8.GetString(objFlag.Payload))
+            {
+                case "message":
+                    {
+                        if (objMulti.Replies.Length != 3) return;
+
+                        var objChannel = objMulti.Replies[1] as BulkReplies;
+                        if (objChannel == null || objChannel.Payload == null || objChannel.Payload.Length == 0) return;
+
+                        var objMsg = objMulti.Replies[2] as BulkReplies;
+                        if (objMsg == null || objMsg.Payload == null) return;
+
+                        this.OnListener(Encoding.UTF8.GetString(objChannel.Payload), objMsg.Payload);
+                        break;
+                    }
+                case "pmessage":
+                    {
+                        if (objMulti.Replies.Length != 4) return;
+
+                        var objChannel = objMulti.Replies[2] as BulkReplies;
+                        if (objChannel == null || objChannel.Payload == null || objChannel.Payload.Length == 0) return;
+
+                        var objMsg = objMulti.Replies[3] as BulkReplies;
+                        if (objMsg == null || objMsg.Payload == null) return;
+
+                        this.OnListener(Encoding.UTF8.GetString(objChannel.Payload), objMsg.Payload);
+                        break;
+                    }
+                    break;
+            }
         }
         /// <summary>
         /// fire Listener
@@ -82,7 +122,8 @@ namespace Redis.Driver
         /// <param name="payload"></param>
         private void OnListener(string channel, byte[] payload)
         {
-            if (this.Listener != null) this.Listener(channel, payload);
+            if (this.Listener != null)
+                ThreadPool.QueueUserWorkItem(_ => { try { this.Listener(channel, payload); } catch { } });
         }
         /// <summary>
         /// subscribe channel
@@ -173,31 +214,7 @@ namespace Redis.Driver
                 return;
             }
 
-            if (response != null)
-            {
-                ThreadPool.QueueUserWorkItem(c =>
-                {
-                    var objMulti = response.Reply as MultiBulkReplies;
-                    if (objMulti == null || objMulti.Replies == null || objMulti.Replies.Length != 3) return;
-
-                    var objFlagBulk = objMulti.Replies[0] as BulkReplies;
-                    if (objFlagBulk == null || objFlagBulk.Payload == null) return;
-
-                    try
-                    {
-                        if (Encoding.UTF8.GetString(objFlagBulk.Payload) != "message") return;
-
-                        var objChannelNameBulk = objMulti.Replies[1] as BulkReplies;
-                        if (objChannelNameBulk == null || objChannelNameBulk.Payload == null) return;
-
-                        var objMessageBulk = objMulti.Replies[2] as BulkReplies;
-                        if (objMessageBulk == null || objMessageBulk.Payload == null) return;
-
-                        this.OnListener(Encoding.UTF8.GetString(objChannelNameBulk.Payload), objMessageBulk.Payload);
-                    }
-                    catch { }
-                });
-            }
+            this.OnResponse(response);
             e.SetReadlength(readLength);
         }
         /// <summary>
@@ -262,11 +279,7 @@ namespace Redis.Driver
         public void Subscribe(params string[] channels)
         {
             if (channels == null || channels.Length == 0) return;
-
-            lock (this)
-            {
-                foreach (var c in channels) this._setChannels.Add(c);
-            }
+            lock (this) { foreach (var c in channels) this._setChannels.Add(c); }
             this.SubscribeInternal(channels);
         }
         /// <summary>
@@ -276,11 +289,7 @@ namespace Redis.Driver
         public void UnSubscribe(params string[] channels)
         {
             if (channels == null || channels.Length == 0) return;
-
-            lock (this)
-            {
-                foreach (var c in channels) this._setChannels.Remove(c);
-            }
+            lock (this) { foreach (var c in channels) this._setChannels.Remove(c); }
             this.UnSubscribeInternal(channels);
         }
         /// <summary>
@@ -290,11 +299,7 @@ namespace Redis.Driver
         public void PatternSubscribe(params string[] patterns)
         {
             if (patterns == null || patterns.Length == 0) return;
-
-            lock (this)
-            {
-                foreach (var p in patterns) this._setPatterns.Add(p);
-            }
+            lock (this) { foreach (var p in patterns) this._setPatterns.Add(p); }
             this.PatternSubscribeInternal(patterns);
         }
         /// <summary>
@@ -304,11 +309,7 @@ namespace Redis.Driver
         public void UnPatternSubscribe(params string[] patterns)
         {
             if (patterns == null || patterns.Length == 0) return;
-
-            lock (this)
-            {
-                foreach (var p in patterns) this._setPatterns.Remove(p);
-            }
+            lock (this) { foreach (var p in patterns) this._setPatterns.Remove(p); }
             this.UnPatternSubscribeInternal(patterns);
         }
         #endregion
