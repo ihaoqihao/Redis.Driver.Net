@@ -9,7 +9,6 @@ namespace Tests
     {
         static public void Main()
         {
-            var client = Redis.Driver.RedisClientFactory.Get("test1");
             Console.ReadLine();
         }
     }

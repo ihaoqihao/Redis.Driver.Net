@@ -6,7 +6,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5ED2B329-EF9D-41B6-B728-A7BAD91039F8}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Tests</RootNamespace>
     <AssemblyName>Tests</AssemblyName>
@@ -31,11 +31,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>Tests.Program</StartupObject>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FastSocket.Client_1.0">
-      <HintPath>..\packages\fastsocket_client.1.0.0.8\lib\net40\FastSocket.Client_1.0.dll</HintPath>
+    <Reference Include="FastSocket.Client_1.0, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\fastsocket_client.1.0.0.9\lib\net40\FastSocket.Client_1.0.dll</HintPath>
     </Reference>
     <Reference Include="FastSocket.SocketBase_1.0, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
