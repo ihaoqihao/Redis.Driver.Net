@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>fastsocket_base</id>
+    <version>1.0.0.9</version>
+    <title>fastsocket base</title>
+    <authors>hong</authors>
+    <owners>hong</owners>
+    <projectUrl>https://10.0.10.3:8443/svn/fastsocket</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>a c# async socket base lib</description>
+  </metadata>
+</package>
