@@ -147,36 +147,30 @@ namespace Redis.Driver
                 return new MultiBulkReplies(null);
             }
 
-            var bulkCount = buffer.Count - (prefixed.OverIndex + 1 - buffer.Offset);
-            if (bulkCount < 1) { readlength = 0; return null; }
-            var bulkBuffer = new ArraySegment<byte>(buffer.Array, prefixed.OverIndex + 1, bulkCount);
-
+            var totalReadlength = prefixed.OverIndex + 1 - buffer.Offset;
             var replies = new IRedisReply[prefixed.Value];
-            int childReadLength = 0;
             for (int i = 0, l = prefixed.Value; i < l; i++)
             {
+                int childReadLength = 0;
+                var childBuffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + totalReadlength, buffer.Count - totalReadlength);
+
                 IRedisReply reply = null;
-                switch (bulkBuffer.Array[bulkBuffer.Offset])
+                switch (childBuffer.Array[childBuffer.Offset])
                 {
-                    case 43: reply = this.FindStatus(bulkBuffer, out childReadLength); break;   //'+'
-                    case 45: reply = this.FindError(bulkBuffer, out childReadLength); break;    //'-'
-                    case 58: reply = this.FindInteger(bulkBuffer, out childReadLength); break;  //':'
-                    case 36: reply = this.FindBulk(bulkBuffer, out childReadLength); break;     //'$'
+                    case 43: reply = this.FindStatus(childBuffer, out childReadLength); break;   //'+'
+                    case 45: reply = this.FindError(childBuffer, out childReadLength); break;    //'-'
+                    case 58: reply = this.FindInteger(childBuffer, out childReadLength); break;  //':'
+                    case 36: reply = this.FindBulk(childBuffer, out childReadLength); break;     //'$'
                     default: throw new BadProtocolException();
                 }
 
-                if (reply == null) { readlength = 0; return null; }
-                replies[i] = reply;
+                if (childReadLength < 1) { readlength = 0; return null; }
 
-                if (i < l - 1)
-                {
-                    var childBulkCount = bulkBuffer.Count - childReadLength;
-                    if (childBulkCount < 1) { readlength = 0; return null; }
-                    bulkBuffer = new ArraySegment<byte>(buffer.Array, bulkBuffer.Offset + childReadLength, childBulkCount);
-                }
+                replies[i] = reply;
+                totalReadlength += childReadLength;
             }
 
-            readlength = bulkBuffer.Offset + childReadLength - buffer.Offset;
+            readlength = totalReadlength;
             return new MultiBulkReplies(replies);
         }
         #endregion
@@ -189,7 +183,7 @@ namespace Redis.Driver
         /// <returns>if not found, return {OverIndex=-1,Value=-1}</returns>
         static private PrefixedLength GetPrefixedLength(ArraySegment<byte> buffer)
         {
-            if (buffer.Count < 2) return new PrefixedLength(-1, -1);
+            if (buffer.Count < 4) return new PrefixedLength(-1, -1);
 
             bool isNegative = buffer.Array[buffer.Offset + 1] == 45;//'-' is 45
             int start = isNegative ? buffer.Offset + 2 : buffer.Offset + 1;

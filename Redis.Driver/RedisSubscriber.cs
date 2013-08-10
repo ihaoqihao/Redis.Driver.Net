@@ -112,7 +112,7 @@ namespace Redis.Driver
                         this.OnListener(Encoding.UTF8.GetString(objChannel.Payload), objMsg.Payload);
                         break;
                     }
-                    break;
+                default: break;
             }
         }
         /// <summary>
