@@ -12,7 +12,10 @@ namespace Example
             var client = Redis.Driver.RedisClientFactory.Get("test1");
 
             //set key1 value1
-            client.Strings.Set("key1", "value1").ContinueWith(c => Console.WriteLine(c.Exception.ToString()),
+            client.Strings.Set("key1", "value1").ContinueWith(c => Console.WriteLine("===========" + c.Exception.ToString()),
+                System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
+
+            client.Strings.Set("key2", "value2").ContinueWith(c => Console.WriteLine("===========" + c.Exception.ToString()),
                 System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
 
             //get key1 value
@@ -22,15 +25,20 @@ namespace Example
                 else Console.WriteLine(Encoding.UTF8.GetString(c.Result));
             });
 
-            //remove key1
-            Sodao.FastSocket.SocketBase.Utils.TaskEx.Delay(3000, () =>
+            client.Strings.Get("key2").ContinueWith(c =>
             {
-                client.Keys.Del("key1").ContinueWith(c =>
-                {
-                    if (c.IsFaulted) Console.WriteLine(c.Exception.ToString());
-                    else Console.WriteLine("key1 was deleted.");
-                });
+                if (c.IsFaulted) Console.WriteLine(c.Exception.ToString());
+                else Console.WriteLine(Encoding.UTF8.GetString(c.Result));
             });
+
+            //redis subscriber
+            var sub = new Redis.Driver.RedisSubscriber("127.0.0.1", 6379);
+            sub.PatternSubscribe("*");
+            sub.Listener += (channel, payload) =>
+            {
+                Console.WriteLine(channel);
+                Console.WriteLine(Encoding.UTF8.GetString(payload));
+            };
 
             Console.ReadLine();
         }

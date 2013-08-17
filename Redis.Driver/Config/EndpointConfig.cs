@@ -27,7 +27,7 @@ namespace Redis.Driver.Config
         /// <summary>
         /// message buffer size
         /// </summary>
-        [ConfigurationProperty("messageBufferSize", IsRequired = false, DefaultValue = 4096)]
+        [ConfigurationProperty("messageBufferSize", IsRequired = false, DefaultValue = 8192)]
         public int MessageBufferSize
         {
             get { return (int)this["messageBufferSize"]; }

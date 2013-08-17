@@ -18,6 +18,7 @@ namespace Redis.Driver
         /// <param name="seqID"></param>
         public void Enqueue(int seqID)
         {
+            System.Console.WriteLine("+" + seqID.ToString());
             lock (this) this._innerQueue.Enqueue(seqID);
         }
         /// <summary>
@@ -28,7 +29,12 @@ namespace Redis.Driver
         {
             lock (this)
             {
-                if (this._innerQueue.Count > 0) return this._innerQueue.Dequeue();
+                if (this._innerQueue.Count > 0)
+                {
+                    var seqID = this._innerQueue.Dequeue();
+                    System.Console.WriteLine("-" + seqID.ToString());
+                    return seqID;
+                }
             }
             return -1;
         }

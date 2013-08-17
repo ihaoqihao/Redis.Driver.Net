@@ -42,15 +42,13 @@ namespace Redis.Driver
             {
                 Config.RedisConfigSection config = null;
 
-                if (string.IsNullOrEmpty(configFile))
-                    config = ConfigurationManager.GetSection("redis") as Config.RedisConfigSection;
+                if (string.IsNullOrEmpty(configFile)) config = ConfigurationManager.GetSection("redis") as Config.RedisConfigSection;
                 else
                 {
-                    config = ConfigurationManager.OpenMappedExeConfiguration(
-                        new ExeConfigurationFileMap
-                        {
-                            ExeConfigFilename = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configFile)
-                        }, ConfigurationUserLevel.None).GetSection("redis") as Config.RedisConfigSection;
+                    config = ConfigurationManager.OpenMappedExeConfiguration(new ExeConfigurationFileMap
+                    {
+                        ExeConfigFilename = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configFile)
+                    }, ConfigurationUserLevel.None).GetSection("redis") as Config.RedisConfigSection;
                 }
 
                 var clientConfig = config.Clients.Get(endpointName);

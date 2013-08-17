@@ -122,8 +122,7 @@ namespace Redis.Driver
         /// <param name="payload"></param>
         private void OnListener(string channel, byte[] payload)
         {
-            if (this.Listener != null)
-                ThreadPool.QueueUserWorkItem(_ => { try { this.Listener(channel, payload); } catch { } });
+            if (this.Listener != null) ThreadPool.QueueUserWorkItem(_ => { try { this.Listener(channel, payload); } catch { } });
         }
         /// <summary>
         /// subscribe channel
@@ -267,7 +266,7 @@ namespace Redis.Driver
         {
             base.OnDisconnected(connection, ex);
             this._currentConnection = null;
-            TaskEx.Delay(new Random().Next(10, 200), this.BeginConnect);
+            TaskEx.Delay(new Random().Next(10, 50), this.BeginConnect);
         }
         #endregion
 
