@@ -224,8 +224,7 @@ namespace Redis.Driver
         protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
         {
             base.OnSendCallback(connection, e);
-            if (e.Status != SendCallbackStatus.Success && connection.Active)
-                connection.BeginSend(e.Packet);
+            if (e.Status != SendCallbackStatus.Success && connection.Active) connection.BeginSend(e.Packet);
         }
         /// <summary>
         /// OnConnected

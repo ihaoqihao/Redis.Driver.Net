@@ -464,7 +464,7 @@ namespace Redis.Driver
         }
         #endregion
 
-        #region Pub/Sub Members
+        #region Publish Members
         /// <summary>
         /// Posts a message to the given channel.
         /// </summary>
@@ -529,7 +529,8 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the integerReply"));
+                source.TrySetException(new RedisException(
+                    "Failed to resolve the integerReply, expected is integerReply, but was " + response.Reply.GetType().Name));
             }, asyncState);
         }
         /// <summary>
@@ -553,7 +554,8 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the integerReply"));
+                source.TrySetException(new RedisException(
+                    "Failed to resolve the integerReply, expected is integerReply, but was " + response.Reply.GetType().Name));
             }, asyncState);
         }
         /// <summary>
@@ -577,7 +579,8 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the statusReply"));
+                source.TrySetException(new RedisException(
+                    "Failed to resolve the statusReply, expected is statusReply, but was " + response.Reply.GetType().Name));
             }, asyncState);
         }
         /// <summary>
@@ -601,7 +604,8 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the bulkReplies"));
+                source.TrySetException(new RedisException(
+                    "Failed to resolve the bulkReplies, expected is bulkReplies, but was " + response.Reply.GetType().Name));
             }, asyncState);
         }
         /// <summary>
@@ -641,8 +645,8 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-
-                source.TrySetException(new RedisException("Failed to resolve the bulkReplies"));
+                source.TrySetException(new RedisException(
+                    "Failed to resolve the bulkReplies, expected is bulkReplies, but was " + response.Reply.GetType().Name));
             }, asyncState);
         }
         /// <summary>
@@ -678,7 +682,8 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the multiBulkReplies."));
+                source.TrySetException(new RedisException(
+                    "Failed to resolve the multiBulkReplies, expected is multiBulkReplies, but was " + response.Reply.GetType().Name));
             }, asyncState);
         }
         /// <summary>
@@ -732,7 +737,8 @@ namespace Redis.Driver
                     source.TrySetException((response.Reply as ErrorReply).Error());
                     return;
                 }
-                source.TrySetException(new RedisException("Failed to resolve the multiBulkReplies."));
+                source.TrySetException(new RedisException(
+                    "Failed to resolve the multiBulkReplies, expected is multiBulkReplies, but was " + response.Reply.GetType().Name));
             }, asyncState);
         }
         #endregion

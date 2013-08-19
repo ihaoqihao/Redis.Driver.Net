@@ -12,10 +12,10 @@ namespace Example
             var client = Redis.Driver.RedisClientFactory.Get("test1");
 
             //set key1 value1
-            client.Strings.Set("key1", "value1").ContinueWith(c => Console.WriteLine("===========" + c.Exception.ToString()),
+            client.Strings.Set("key1", "value1").ContinueWith(c => Console.WriteLine(c.Exception.ToString()),
                 System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
 
-            client.Strings.Set("key2", "value2").ContinueWith(c => Console.WriteLine("===========" + c.Exception.ToString()),
+            client.Strings.Set("key2", "value2").ContinueWith(c => Console.WriteLine(c.Exception.ToString()),
                 System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
 
             //get key1 value
