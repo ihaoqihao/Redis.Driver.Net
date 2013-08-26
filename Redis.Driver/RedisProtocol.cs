@@ -44,7 +44,9 @@ namespace Redis.Driver
         /// <returns></returns>
         static private int GetSeqID(IConnection connection)
         {
-            return (connection.UserData as IRedisReplyQueue).Dequeue();
+            var queue = connection.UserData as IRedisReplyQueue;
+            if (queue == null) return -1;
+            else return queue.Dequeue();
         }
         /// <summary>
         /// find status reply
