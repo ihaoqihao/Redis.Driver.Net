@@ -29,7 +29,10 @@ namespace Redis.Driver
                 case 58: reply = this.FindInteger(buffer, out readlength); break;   //':'
                 case 36: reply = this.FindBulk(buffer, out readlength); break;      //'$'
                 case 42: reply = this.FindMultiBulk(buffer, out readlength); break; //'*'
-                default: throw new BadProtocolException();
+                default:
+                    Sodao.FastSocket.SocketBase.Log.Logger.Debug("bad redis protocol:" +
+                        System.Text.Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count));
+                    throw new BadProtocolException();
             }
             if (reply == null) return null;
             return new RedisResponse(GetSeqID(connection), reply);
@@ -162,7 +165,10 @@ namespace Redis.Driver
                     case 45: reply = this.FindError(childBuffer, out childReadLength); break;    //'-'
                     case 58: reply = this.FindInteger(childBuffer, out childReadLength); break;  //':'
                     case 36: reply = this.FindBulk(childBuffer, out childReadLength); break;     //'$'
-                    default: throw new BadProtocolException();
+                    default:
+                        Sodao.FastSocket.SocketBase.Log.Logger.Debug("bad redis protocol:" +
+                            System.Text.Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count));
+                        throw new BadProtocolException();
                 }
 
                 if (childReadLength < 1) { readlength = 0; return null; }

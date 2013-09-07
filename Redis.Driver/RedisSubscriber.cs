@@ -37,7 +37,7 @@ namespace Redis.Driver
         /// <param name="connectionString">连接字符串,如 redis://127.0.0.1:6379</param>
         /// <exception cref="ArgumentNullException">connectionString is null or empty.</exception>
         public RedisSubscriber(string connectionString)
-            : base(1024, 1024)
+            : base(8192, 8192)
         {
             if (string.IsNullOrEmpty(connectionString)) throw new ArgumentNullException("connectionString");
 
@@ -51,7 +51,7 @@ namespace Redis.Driver
         /// <param name="host"></param>
         /// <param name="port"></param>
         public RedisSubscriber(string host, int port)
-            : base(1024, 1024)
+            : base(8192, 8192)
         {
             this._endPoint = new IPEndPoint(IPAddress.Parse(host), port);
             this.BeginConnect();
@@ -122,7 +122,12 @@ namespace Redis.Driver
         /// <param name="payload"></param>
         private void OnListener(string channel, byte[] payload)
         {
-            if (this.Listener != null) ThreadPool.QueueUserWorkItem(_ => { try { this.Listener(channel, payload); } catch { } });
+            if (this.Listener != null)
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    try { this.Listener(channel, payload); }
+                    catch (Exception ex) { Sodao.FastSocket.SocketBase.Log.Logger.Error(ex.Message, ex); }
+                });
         }
         /// <summary>
         /// subscribe channel
@@ -202,10 +207,7 @@ namespace Redis.Driver
 
             int readLength;
             RedisResponse response = null;
-            try
-            {
-                response = this._protocol.FindResponse(connection, e.Buffer, out readLength);
-            }
+            try { response = this._protocol.FindResponse(connection, e.Buffer, out readLength); }
             catch (Exception ex)
             {
                 connection.BeginDisconnect(ex);

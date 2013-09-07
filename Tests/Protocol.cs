@@ -78,7 +78,8 @@ namespace Tests
         [Test]
         public void MultiBulkReply()
         {
-            string reply = "@@@@@@@@@@*4\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n:154\r\n";
+            string reply = "*3\r\n$10\r\npsubscribe\r\n$1\r\n*\r\n";
+            //string reply = "@@@@@@@@@@*4\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n:154\r\n";
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(reply), 10, 33);
             int readed;
             var objResponse = new Redis.Driver.RedisProtocol().FindResponse(null, buffer, out readed);
