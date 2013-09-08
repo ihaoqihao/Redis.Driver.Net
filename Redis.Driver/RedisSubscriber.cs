@@ -126,7 +126,7 @@ namespace Redis.Driver
                 ThreadPool.QueueUserWorkItem(_ =>
                 {
                     try { this.Listener(channel, payload); }
-                    catch (Exception ex) { Sodao.FastSocket.SocketBase.Log.Logger.Error(ex.Message, ex); }
+                    catch (Exception ex) { Sodao.FastSocket.SocketBase.Log.Trace.Error(ex.Message, ex); }
                 });
         }
         /// <summary>
@@ -217,16 +217,6 @@ namespace Redis.Driver
 
             this.OnResponse(response);
             e.SetReadlength(readLength);
-        }
-        /// <summary>
-        /// OnSendCallback
-        /// </summary>
-        /// <param name="connection"></param>
-        /// <param name="e"></param>
-        protected override void OnSendCallback(IConnection connection, SendCallbackEventArgs e)
-        {
-            base.OnSendCallback(connection, e);
-            if (e.Status != SendCallbackStatus.Success && connection.Active) connection.BeginSend(e.Packet);
         }
         /// <summary>
         /// OnConnected

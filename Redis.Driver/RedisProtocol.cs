@@ -30,7 +30,7 @@ namespace Redis.Driver
                 case 36: reply = this.FindBulk(buffer, out readlength); break;      //'$'
                 case 42: reply = this.FindMultiBulk(buffer, out readlength); break; //'*'
                 default:
-                    Sodao.FastSocket.SocketBase.Log.Logger.Debug("bad redis protocol:" +
+                    Sodao.FastSocket.SocketBase.Log.Trace.Debug("bad redis protocol:" +
                         System.Text.Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count));
                     throw new BadProtocolException();
             }
@@ -47,7 +47,7 @@ namespace Redis.Driver
         /// <returns></returns>
         static private int GetSeqID(IConnection connection)
         {
-            var queue = connection.UserData as IRedisReplyQueue;
+            var queue = connection.UserData as RedisReplyQueue;
             if (queue == null) return -1;
             else return queue.Dequeue();
         }
@@ -166,7 +166,7 @@ namespace Redis.Driver
                     case 58: reply = this.FindInteger(childBuffer, out childReadLength); break;  //':'
                     case 36: reply = this.FindBulk(childBuffer, out childReadLength); break;     //'$'
                     default:
-                        Sodao.FastSocket.SocketBase.Log.Logger.Debug("bad redis protocol:" +
+                        Sodao.FastSocket.SocketBase.Log.Trace.Debug("bad redis protocol:" +
                             System.Text.Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count));
                         throw new BadProtocolException();
                 }

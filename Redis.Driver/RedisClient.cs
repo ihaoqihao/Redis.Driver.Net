@@ -66,7 +66,7 @@ namespace Redis.Driver
         /// <param name="connection"></param>
         protected override void OnServerPoolConnected(string name, IConnection connection)
         {
-            connection.UserData = new DefaultRedisReplyQueue();
+            connection.UserData = new RedisReplyQueue();
             base.OnServerPoolConnected(name, connection);
         }
         /// <summary>
@@ -76,7 +76,7 @@ namespace Redis.Driver
         /// <param name="packet"></param>
         protected override void OnStartSending(IConnection connection, Packet packet)
         {
-            (connection.UserData as IRedisReplyQueue).Enqueue((packet as Request<RedisResponse>).SeqID);
+            (connection.UserData as RedisReplyQueue).Enqueue((packet as Request<RedisResponse>).SeqID);
             base.OnStartSending(connection, packet);
         }
         #endregion
