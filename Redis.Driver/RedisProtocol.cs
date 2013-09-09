@@ -155,6 +155,8 @@ namespace Redis.Driver
             var replies = new IRedisReply[prefixed.Value];
             for (int i = 0, l = prefixed.Value; i < l; i++)
             {
+                if (buffer.Count <= totalReadlength) { readlength = 0; return null; }
+
                 int childReadLength = 0;
                 var childBuffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + totalReadlength, buffer.Count - totalReadlength);
 
@@ -200,7 +202,6 @@ namespace Redis.Driver
             {
                 if (buffer.Array[i] == 13 && i + 1 < l && buffer.Array[i + 1] == 10)
                     return new PrefixedLength(i + 1, isNegative ? -intValue : intValue);
-
                 intValue = intValue * 10 + (buffer.Array[i] - 48);//'0' is 48
             }
 

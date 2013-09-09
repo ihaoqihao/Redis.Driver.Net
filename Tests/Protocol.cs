@@ -73,13 +73,18 @@ namespace Tests
             Assert.AreEqual(readed, 5);
             Assert.IsTrue(objResponse.Reply is Redis.Driver.BulkReplies);
             Assert.IsNull((objResponse.Reply as Redis.Driver.BulkReplies).Payload);
+
+            reply = "$5\r\nabc";
+            buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(reply), 0, 7);
+            objResponse = new Redis.Driver.RedisProtocol().FindResponse(null, buffer, out readed);
+            Assert.IsNull(objResponse);
+            Assert.AreEqual(readed, 0);
         }
 
         [Test]
         public void MultiBulkReply()
         {
-            string reply = "*3\r\n$10\r\npsubscribe\r\n$1\r\n*\r\n";
-            //string reply = "@@@@@@@@@@*4\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n:154\r\n";
+            string reply = "@@@@@@@@@@*4\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n:154\r\n";
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(reply), 10, 33);
             int readed;
             var objResponse = new Redis.Driver.RedisProtocol().FindResponse(null, buffer, out readed);

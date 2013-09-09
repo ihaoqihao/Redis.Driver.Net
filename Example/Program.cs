@@ -35,7 +35,7 @@ namespace Example
 
             //redis subscriber
             var sub = new Redis.Driver.RedisSubscriber("127.0.0.1", 6379);
-            sub.PatternSubscribe("fuck*123");
+            sub.Subscribe("channel1");
             sub.Listener += (channel, payload) =>
             {
                 Console.WriteLine(channel);
