@@ -11,7 +11,7 @@ namespace Example
         {
             Sodao.FastSocket.SocketBase.Log.Trace.EnableConsole();
 
-            var client = Redis.Driver.RedisClientFactory.Get("test1");
+            var client = Redis.Driver.RedisClientPool.Get("test1");
 
             //set key1 value1
             client.Strings.Set("key1", "value1").ContinueWith(c => Console.WriteLine(c.Exception.ToString()),

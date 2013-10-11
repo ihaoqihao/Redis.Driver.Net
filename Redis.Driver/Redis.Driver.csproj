@@ -50,6 +50,7 @@
     <Compile Include="Config\EndpointCollection.cs" />
     <Compile Include="Config\EndpointConfig.cs" />
     <Compile Include="Config\RedisConfigSection.cs" />
+    <Compile Include="RedisClientPool.cs" />
     <Compile Include="RedisReplyQueue.cs" />
     <Compile Include="IHashCommands.cs" />
     <Compile Include="IKeyCommands.cs" />
