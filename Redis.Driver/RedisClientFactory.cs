@@ -42,5 +42,27 @@ namespace Redis.Driver
 
             return redisClient;
         }
+
+        /// <summary>
+        /// get <see cref="RedisClient"/>
+        /// </summary>
+        /// <param name="endpointName"></param>
+        /// <returns></returns>
+        [Obsolete("建议使用RedisClientPool.Get/1")]
+        static public RedisClient Get(string endpointName)
+        {
+            return RedisClientPool.Get(endpointName);
+        }
+        /// <summary>
+        /// get <see cref="RedisClient"/>
+        /// </summary>
+        /// <param name="configFile"></param>
+        /// <param name="endpointName"></param>
+        /// <returns></returns>
+        [Obsolete("建议使用RedisClientPool.Get/2")]
+        static public RedisClient Get(string configFile, string endpointName)
+        {
+            return RedisClientPool.Get(configFile, endpointName);
+        }
     }
 }
