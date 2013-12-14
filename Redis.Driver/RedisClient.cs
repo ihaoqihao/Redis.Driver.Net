@@ -278,10 +278,37 @@ namespace Redis.Driver
             if (dic == null || dic.Count == 0) throw new ArgumentNullException("dic", "dic is null or empty.");
 
             var request = new RedisRequest(dic.Count + dic.Count + 1).AddArgument("MSET");
-            foreach (var kv in dic)
-                request.AddArgument(kv.Key).AddArgument(kv.Value);
+            foreach (var kv in dic) request.AddArgument(kv.Key).AddArgument(kv.Value);
 
             return this.ExecuteStatusReply(request, asyncState);
+        }
+        /// <summary>
+        /// Set key to hold string value if key does not exist. 
+        /// In that case, it is equal to SET. 
+        /// When key already holds a value, no operation is performed. 
+        /// SETNX is short for "SET if N ot e X ists".
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task<bool> SetNX(string key, string value, object asyncState = null)
+        {
+            return this.ExecuteIntegerReply2(new RedisRequest(3).AddArgument("SETNX").AddArgument(key).AddArgument(value), asyncState);
+        }
+        /// <summary>
+        /// Set key to hold string value if key does not exist. 
+        /// In that case, it is equal to SET. 
+        /// When key already holds a value, no operation is performed. 
+        /// SETNX is short for "SET if N ot e X ists".
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task<bool> SetNX(string key, byte[] value, object asyncState = null)
+        {
+            return this.ExecuteIntegerReply2(new RedisRequest(3).AddArgument("SETNX").AddArgument(key).AddArgument(value), asyncState);
         }
         #endregion
 

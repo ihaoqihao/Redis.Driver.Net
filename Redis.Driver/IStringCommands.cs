@@ -107,5 +107,27 @@ namespace Redis.Driver
         /// <param name="asyncState"></param>
         /// <returns>always OK since MSET can't fail.</returns>
         Task Set(Dictionary<string, byte[]> dic, object asyncState = null);
+        /// <summary>
+        /// Set key to hold string value if key does not exist. 
+        /// In that case, it is equal to SET. 
+        /// When key already holds a value, no operation is performed. 
+        /// SETNX is short for "SET if N ot e X ists".
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task<bool> SetNX(string key, string value, object asyncState = null);
+        /// <summary>
+        /// Set key to hold string value if key does not exist. 
+        /// In that case, it is equal to SET. 
+        /// When key already holds a value, no operation is performed. 
+        /// SETNX is short for "SET if N ot e X ists".
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task<bool> SetNX(string key, byte[] value, object asyncState = null);
     }
 }
