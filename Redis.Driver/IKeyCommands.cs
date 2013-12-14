@@ -38,5 +38,12 @@ namespace Redis.Driver
         /// <param name="asyncState"></param>
         /// <returns></returns>
         Task Expire(string key, int seconds, object asyncState = null);
+        /// <summary>
+        /// Returns if key exists.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>true if the key exists.</returns>
+        Task<bool> Exists(string key, object asyncState = null);
     }
 }

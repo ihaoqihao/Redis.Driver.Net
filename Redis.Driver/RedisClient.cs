@@ -132,6 +132,16 @@ namespace Redis.Driver
         {
             return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("EXPIRE").AddArgument(key).AddArgument(seconds), asyncState);
         }
+        /// <summary>
+        /// Returns if key exists.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>true if the key exists.</returns>
+        public Task<bool> Exists(string key, object asyncState = null)
+        {
+            return this.ExecuteIntegerReply2(new RedisRequest(2).AddArgument("EXISTS").AddArgument(key), asyncState);
+        }
         #endregion
 
         #region IStringCommands Members
