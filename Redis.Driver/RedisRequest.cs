@@ -40,7 +40,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">value is null or empty.</exception>
         public RedisRequest AddArgument(string value)
         {
-            if (string.IsNullOrEmpty(value)) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException("value");
 
             var bytes = Encoding.UTF8.GetBytes(value);
             this._stream.WriteByte(36);//'$'
@@ -58,14 +58,12 @@ namespace Redis.Driver
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">keys is null or empty.</exception>
+        /// <exception cref="ArgumentNullException">value is null or empty.</exception>
         public RedisRequest AddArgument(params string[] value)
         {
-            if (value == null || value.Length == 0) throw new ArgumentNullException("keys");
+            if (value == null) throw new ArgumentNullException("value");
 
-            foreach (var child in value)
-                this.AddArgument(child);
-
+            foreach (var child in value) this.AddArgument(child);
             return this;
         }
         /// <summary>
@@ -76,7 +74,7 @@ namespace Redis.Driver
         /// <exception cref="ArgumentNullException">value is null.</exception>
         public RedisRequest AddArgument(byte[] value)
         {
-            if (value == null || value.Length == 0) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException("value");
 
             this._stream.WriteByte(36);//'$'
             WriteRedisInteger(this._stream, value.Length);
@@ -133,9 +131,7 @@ namespace Redis.Driver
         public byte[] ToPayload()
         {
             if (this._stream == null) return null;
-
-            using (this._stream)
-                return this._stream.ToArray();
+            using (this._stream) return this._stream.ToArray();
         }
         #endregion
 
@@ -147,8 +143,7 @@ namespace Redis.Driver
         /// <param name="value"></param>
         static private void WriteRedisInteger(MemoryStream stream, int value)
         {
-            if (value >= 0 && value <= 9)
-                stream.WriteByte((byte)(48 + value));//'0'+value
+            if (value >= 0 && value <= 9) stream.WriteByte((byte)(48 + value));//'0'+value
             else if (value < 0 && value >= -9)
             {
                 stream.WriteByte(45);//'-'

@@ -114,7 +114,7 @@ namespace Redis.Driver
             var prefixed = GetPrefixedLength(buffer);
             if (prefixed.OverIndex == -1) { readlength = 0; return null; }
 
-            if (prefixed.Value < 1)
+            if (prefixed.Value < 0)
             {
                 readlength = prefixed.OverIndex + 1 - buffer.Offset;
                 return new BulkReplies(null);
@@ -142,7 +142,7 @@ namespace Redis.Driver
             var prefixed = GetPrefixedLength(buffer);
             if (prefixed.OverIndex == -1) { readlength = 0; return null; }
 
-            if (prefixed.Value < 1)
+            if (prefixed.Value < 0)
             {
                 readlength = prefixed.OverIndex + 1 - buffer.Offset;
                 return new MultiBulkReplies(null);
