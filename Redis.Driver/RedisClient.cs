@@ -253,6 +253,19 @@ namespace Redis.Driver
             return this.ExecuteStatusReply(new RedisRequest(3).AddArgument("SET").AddArgument(key).AddArgument(value), asyncState);
         }
         /// <summary>
+        /// 将值 value 关联到 key ，并将 key 的生存时间设为 seconds (以秒为单位)。
+        /// 如果 key 已经存在， SETEX 命令将覆写旧值。
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="expirySeconds"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task IStringCommands.Set(string key, string value, int expirySeconds, object asyncState)
+        {
+            return this.ExecuteStatusReply(new RedisRequest(4).AddArgument("SETEX").AddArgument(key).AddArgument(expirySeconds).AddArgument(value), asyncState);
+        }
+        /// <summary>
         /// Set key to hold the string value. 
         /// If key already holds a value, it is overwritten, regardless of its type.
         /// </summary>
@@ -263,6 +276,19 @@ namespace Redis.Driver
         Task IStringCommands.Set(string key, byte[] value, object asyncState)
         {
             return this.ExecuteStatusReply(new RedisRequest(3).AddArgument("SET").AddArgument(key).AddArgument(value), asyncState);
+        }
+        /// <summary>
+        /// 将值 value 关联到 key ，并将 key 的生存时间设为 seconds (以秒为单位)。
+        /// 如果 key 已经存在， SETEX 命令将覆写旧值。
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="expirySeconds"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task IStringCommands.Set(string key, byte[] value, int expirySeconds, object asyncState)
+        {
+            return this.ExecuteStatusReply(new RedisRequest(4).AddArgument("SETEX").AddArgument(key).AddArgument(expirySeconds).AddArgument(value), asyncState);
         }
         /// <summary>
         /// Sets the given keys to their respective values. 
@@ -293,7 +319,7 @@ namespace Redis.Driver
         /// <param name="value"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        public Task<bool> SetNX(string key, string value, object asyncState = null)
+        Task<bool> IStringCommands.SetNX(string key, string value, object asyncState)
         {
             return this.ExecuteIntegerReply2(new RedisRequest(3).AddArgument("SETNX").AddArgument(key).AddArgument(value), asyncState);
         }
@@ -307,7 +333,7 @@ namespace Redis.Driver
         /// <param name="value"></param>
         /// <param name="asyncState"></param>
         /// <returns></returns>
-        public Task<bool> SetNX(string key, byte[] value, object asyncState = null)
+        Task<bool> IStringCommands.SetNX(string key, byte[] value, object asyncState)
         {
             return this.ExecuteIntegerReply2(new RedisRequest(3).AddArgument("SETNX").AddArgument(key).AddArgument(value), asyncState);
         }

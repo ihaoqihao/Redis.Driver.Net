@@ -89,6 +89,16 @@ namespace Redis.Driver
         /// <returns>always OK since SET can't fail.</returns>
         Task Set(string key, string value, object asyncState = null);
         /// <summary>
+        /// 将值 value 关联到 key ，并将 key 的生存时间设为 seconds (以秒为单位)。
+        /// 如果 key 已经存在， SETEX 命令将覆写旧值。
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="expirySeconds"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task Set(string key, string value, int expirySeconds, object asyncState = null);
+        /// <summary>
         /// Set key to hold the string value. 
         /// If key already holds a value, it is overwritten, regardless of its type.
         /// </summary>
@@ -97,6 +107,16 @@ namespace Redis.Driver
         /// <param name="asyncState"></param>
         /// <returns>always OK since SET can't fail.</returns>
         Task Set(string key, byte[] value, object asyncState = null);
+        /// <summary>
+        /// 将值 value 关联到 key ，并将 key 的生存时间设为 seconds (以秒为单位)。
+        /// 如果 key 已经存在， SETEX 命令将覆写旧值。
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="expirySeconds"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task Set(string key, byte[] value, int expirySeconds, object asyncState = null);
         /// <summary>
         /// Sets the given keys to their respective values. 
         /// MSET replaces existing values with new values, just as regular SET. See MSETNX if you don't want to overwrite existing values.
