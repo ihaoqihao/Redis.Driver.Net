@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Text;
 using Sodao.FastSocket.Client.Protocol;
 using Sodao.FastSocket.SocketBase;
@@ -44,9 +45,10 @@ namespace Redis.Driver
         /// <returns></returns>
         static private int GetSeqID(IConnection connection)
         {
-            var queue = connection.UserData as RedisReplyQueue;
-            if (queue == null) return -1;
-            else return queue.Dequeue();
+            int seqId;
+            var queue = connection.UserData as ConcurrentQueue<int>;
+            if (queue != null && queue.TryDequeue(out seqId)) return seqId;
+            return -1;
         }
         /// <summary>
         /// find status reply

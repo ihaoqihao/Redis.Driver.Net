@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -66,7 +67,7 @@ namespace Redis.Driver
         /// <param name="connection"></param>
         protected override void OnServerPoolConnected(string name, IConnection connection)
         {
-            connection.UserData = new RedisReplyQueue();
+            connection.UserData = new ConcurrentQueue<int>();
             base.OnServerPoolConnected(name, connection);
         }
         /// <summary>
@@ -76,7 +77,7 @@ namespace Redis.Driver
         /// <param name="packet"></param>
         protected override void OnStartSending(IConnection connection, Packet packet)
         {
-            (connection.UserData as RedisReplyQueue).Enqueue((packet as Request<RedisResponse>).SeqID);
+            (connection.UserData as ConcurrentQueue<int>).Enqueue((packet as Request<RedisResponse>).SeqID);
             base.OnStartSending(connection, packet);
         }
         #endregion
