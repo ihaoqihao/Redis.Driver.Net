@@ -629,7 +629,7 @@ namespace Redis.Driver
         }
         #endregion
 
-        #region Publish Members
+        #region Publish
         /// <summary>
         /// Posts a message to the given channel.
         /// </summary>
