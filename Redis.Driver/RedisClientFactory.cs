@@ -38,31 +38,9 @@ namespace Redis.Driver
                 clientConfig.MillisecondsReceiveTimeout);
 
             foreach (Config.ServerConfig server in clientConfig.Servers)
-                redisClient.RegisterServerNode(string.Concat(server.Host, server.Port), new IPEndPoint(IPAddress.Parse(server.Host), server.Port));
+                redisClient.TryRegisterEndPoint(string.Concat(server.Host, server.Port), new IPEndPoint(IPAddress.Parse(server.Host), server.Port));
 
             return redisClient;
-        }
-
-        /// <summary>
-        /// get <see cref="RedisClient"/>
-        /// </summary>
-        /// <param name="endpointName"></param>
-        /// <returns></returns>
-        [Obsolete("建议使用RedisClientPool.Get/1")]
-        static public RedisClient Get(string endpointName)
-        {
-            return RedisClientPool.Get(endpointName);
-        }
-        /// <summary>
-        /// get <see cref="RedisClient"/>
-        /// </summary>
-        /// <param name="configFile"></param>
-        /// <param name="endpointName"></param>
-        /// <returns></returns>
-        [Obsolete("建议使用RedisClientPool.Get/2")]
-        static public RedisClient Get(string configFile, string endpointName)
-        {
-            return RedisClientPool.Get(configFile, endpointName);
         }
     }
 }

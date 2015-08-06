@@ -1,26 +1,39 @@
-﻿using System;
+﻿using Sodao.FastSocket.Client.Protocol;
+using Sodao.FastSocket.SocketBase;
+using System;
 using System.Collections.Concurrent;
 using System.Text;
-using Sodao.FastSocket.Client.Protocol;
-using Sodao.FastSocket.SocketBase;
 
 namespace Redis.Driver
 {
     /// <summary>
     /// redis协议
     /// </summary>
-    public sealed class RedisProtocol : IProtocol<RedisResponse>
+    public sealed class RedisProtocol : IProtocol<RedisMessage>
     {
         #region IProtocol Members
         /// <summary>
-        /// find response
+        /// default sync seqId
+        /// </summary>
+        public int DefaultSyncSeqId
+        {
+            get { throw new NotImplementedException(); }
+        }
+        /// <summary>
+        /// true
+        /// </summary>
+        public bool IsAsync
+        {
+            get { return true; }
+        }
+        /// <summary>
+        /// parse
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="buffer"></param>
         /// <param name="readlength"></param>
         /// <returns></returns>
-        /// <exception cref="BadProtocolException">未能识别的协议</exception>
-        public RedisResponse FindResponse(IConnection connection, ArraySegment<byte> buffer, out int readlength)
+        public RedisMessage Parse(IConnection connection, ArraySegment<byte> buffer, out int readlength)
         {
             IRedisReply reply = null;
             switch (buffer.Array[buffer.Offset])
@@ -33,21 +46,21 @@ namespace Redis.Driver
                 default: throw new BadProtocolException();
             }
             if (reply == null) return null;
-            return new RedisResponse(GetSeqID(connection), reply);
+            return new RedisMessage(GetSeqId(connection), reply);
         }
         #endregion
 
         #region Private Methods
         /// <summary>
-        /// get seqID
+        /// get seqId
         /// </summary>
         /// <param name="connection"></param>
         /// <returns></returns>
-        static private int GetSeqID(IConnection connection)
+        static private int GetSeqId(IConnection connection)
         {
             int seqId;
-            var queue = connection.UserData as ConcurrentQueue<int>;
-            if (queue != null && queue.TryDequeue(out seqId)) return seqId;
+            var q = connection.UserData as ConcurrentQueue<int>;
+            if (q != null && q.TryDequeue(out seqId)) return seqId;
             return -1;
         }
         /// <summary>
@@ -221,6 +234,7 @@ namespace Redis.Driver
             /// prefixed length value
             /// </summary>
             public int Value;
+
             /// <summary>
             /// new
             /// </summary>

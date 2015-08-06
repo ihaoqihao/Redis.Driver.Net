@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Sodao.FastSocket.Client;
+using Sodao.FastSocket.SocketBase;
+using Sodao.FastSocket.SocketBase.Utils;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.Threading;
-using Sodao.FastSocket.Client;
-using Sodao.FastSocket.SocketBase;
-using Sodao.FastSocket.SocketBase.Utils;
 
 namespace Redis.Driver
 {
@@ -68,21 +68,25 @@ namespace Redis.Driver
         /// </summary>
         private void BeginConnect()
         {
-            SocketConnector.BeginConnect(this._endPoint, this, connection =>
+            SocketConnector.Connect(this._endPoint).ContinueWith(c =>
             {
-                if (connection == null) TaskEx.Delay(new Random().Next(1000, 3000), this.BeginConnect);
-                else base.RegisterConnection(connection);
+                if (c.IsFaulted)
+                {
+                    TaskEx.Delay(new Random().Next(1000, 3000)).ContinueWith(_ => this.BeginConnect());
+                    return;
+                }
+                base.RegisterConnection(base.NewConnection(c.Result));
             });
         }
         /// <summary>
         /// on reponse
         /// </summary>
-        /// <param name="response"></param>
-        private void OnResponse(RedisResponse response)
+        /// <param name="message"></param>
+        private void OnResponse(RedisMessage message)
         {
-            if (response == null) return;
+            if (message == null) return;
 
-            var objMulti = response.Reply as MultiBulkReplies;
+            var objMulti = message.Reply as MultiBulkReplies;
             if (objMulti == null || objMulti.Replies == null || objMulti.Replies.Length == 0) return;
 
             var objFlag = objMulti.Replies[0] as BulkReplies;
@@ -126,12 +130,12 @@ namespace Redis.Driver
         /// <param name="payload"></param>
         private void OnListener(string channel, byte[] payload)
         {
-            if (this.Listener != null)
-                ThreadPool.QueueUserWorkItem(_ =>
-                {
-                    try { this.Listener(channel, payload); }
-                    catch (Exception ex) { Sodao.FastSocket.SocketBase.Log.Trace.Error(ex.Message, ex); }
-                });
+            if (this.Listener == null) return;
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try { this.Listener(channel, payload); }
+                catch (Exception ex) { Sodao.FastSocket.SocketBase.Log.Trace.Error(ex.Message, ex); }
+            });
         }
         /// <summary>
         /// ping
@@ -219,16 +223,17 @@ namespace Redis.Driver
             base.OnMessageReceived(connection, e);
 
             int readLength;
-            RedisResponse response = null;
-            try { response = this._protocol.FindResponse(connection, e.Buffer, out readLength); }
+            RedisMessage message = null;
+            try { message = this._protocol.Parse(connection, e.Buffer, out readLength); }
             catch (Exception ex)
             {
+                base.OnConnectionError(connection, ex);
                 connection.BeginDisconnect(ex);
                 e.SetReadlength(e.Buffer.Count);
                 return;
             }
 
-            this.OnResponse(response);
+            this.OnResponse(message);
             e.SetReadlength(readLength);
         }
         /// <summary>
@@ -270,7 +275,8 @@ namespace Redis.Driver
         {
             base.OnDisconnected(connection, ex);
             this._currentConnection = null;
-            TaskEx.Delay(new Random().Next(10, 50), this.BeginConnect);
+
+            TaskEx.Delay(new Random().Next(10, 100)).ContinueWith(_ => this.BeginConnect());
         }
         #endregion
 

@@ -33,6 +33,12 @@
     <DocumentationFile>bin\Release\Redis.Driver.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FastSocket.Client">
+      <HintPath>..\packages\fastsocket_client_1.0.0.6.1.0.0.0\lib\net40\FastSocket.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="FastSocket.SocketBase">
+      <HintPath>..\packages\fastsocket_base_1.0.0.6.1.0.0.0\lib\net40\FastSocket.SocketBase.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
   </ItemGroup>
@@ -43,21 +49,30 @@
     <Compile Include="Config\EndpointConfig.cs" />
     <Compile Include="Config\RedisConfigSection.cs" />
     <Compile Include="IListCommands.cs" />
-    <Compile Include="RedisClientPool.cs" />
     <Compile Include="IHashCommands.cs" />
     <Compile Include="IKeyCommands.cs" />
     <Compile Include="IStringCommands.cs" />
+    <Compile Include="RedisClient.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="RedisClientFactory.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="RedisClientPool.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="RedisReply.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RedisClient.cs" />
-    <Compile Include="RedisClientFactory.cs" />
     <Compile Include="RedisException.cs" />
     <Compile Include="RedisProtocol.cs" />
     <Compile Include="RedisRequest.cs" />
-    <Compile Include="RedisResponse.cs" />
-    <Compile Include="RedisSubscriber.cs" />
+    <Compile Include="RedisMessage.cs" />
+    <Compile Include="RedisSubscriber.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="redis.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

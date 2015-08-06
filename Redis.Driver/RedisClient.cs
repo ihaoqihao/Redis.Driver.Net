@@ -1,18 +1,19 @@
-﻿using System;
+﻿using Sodao.FastSocket.Client;
+using Sodao.FastSocket.SocketBase;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Sodao.FastSocket.Client;
-using Sodao.FastSocket.SocketBase;
 
 namespace Redis.Driver
 {
     /// <summary>
     /// redis client
     /// </summary>
-    public sealed class RedisClient : PooledSocketClient<RedisResponse>, IStringCommands, IKeyCommands, IHashCommands, IListCommands
+    public sealed class RedisClient : SocketClient<RedisMessage>,
+        IStringCommands, IKeyCommands, IHashCommands, IListCommands
     {
         #region Constructors
         /// <summary>
@@ -68,14 +69,14 @@ namespace Redis.Driver
 
         #region Override Methods
         /// <summary>
-        /// OnServerPoolConnected
+        /// on endPoint
         /// </summary>
         /// <param name="name"></param>
         /// <param name="connection"></param>
-        protected override void OnServerPoolConnected(string name, IConnection connection)
+        protected override void OnEndPointConnected(string name, IConnection connection)
         {
             connection.UserData = new ConcurrentQueue<int>();
-            base.OnServerPoolConnected(name, connection);
+            base.OnEndPointConnected(name, connection);
         }
         /// <summary>
         /// OnStartSending
@@ -84,7 +85,7 @@ namespace Redis.Driver
         /// <param name="packet"></param>
         protected override void OnStartSending(IConnection connection, Packet packet)
         {
-            (connection.UserData as ConcurrentQueue<int>).Enqueue((packet as Request<RedisResponse>).SeqID);
+            (connection.UserData as ConcurrentQueue<int>).Enqueue((packet as Request<RedisMessage>).SeqId);
             base.OnStartSending(connection, packet);
         }
         #endregion
@@ -663,13 +664,14 @@ namespace Redis.Driver
         /// <param name="asyncState"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">callback is null.</exception>
-        private Task<T> Execute<T>(byte[] payload, Action<TaskCompletionSource<T>, RedisResponse> callback, object asyncState)
+        private Task<T> Execute<T>(byte[] payload, Action<TaskCompletionSource<T>, RedisMessage> callback, object asyncState)
         {
             if (callback == null) throw new ArgumentNullException("callback");
 
             var source = new TaskCompletionSource<T>(asyncState);
-            base.Send(new Request<RedisResponse>(base.NextRequestSeqID(), string.Empty, payload,
-                ex => source.TrySetException(ex), response => callback(source, response)));
+            base.Send(base.NewRequest(string.Empty, payload, base.MillisecondsReceiveTimeout,
+                ex => source.TrySetException(ex),
+                message => callback(source, message)));
             return source.Task;
         }
         /// <summary>
