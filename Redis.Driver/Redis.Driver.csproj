@@ -33,14 +33,6 @@
     <DocumentationFile>bin\Release\Redis.Driver.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FastSocket.Client, Version=1.0.0.5, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\fastsocket_client.1.0.0.19\lib\net40\FastSocket.Client.dll</HintPath>
-    </Reference>
-    <Reference Include="FastSocket.SocketBase, Version=1.0.0.5, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\fastsocket_base.1.0.0.18\lib\net40\FastSocket.SocketBase.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
   </ItemGroup>
@@ -50,6 +42,7 @@
     <Compile Include="Config\EndpointCollection.cs" />
     <Compile Include="Config\EndpointConfig.cs" />
     <Compile Include="Config\RedisConfigSection.cs" />
+    <Compile Include="IListCommands.cs" />
     <Compile Include="RedisClientPool.cs" />
     <Compile Include="IHashCommands.cs" />
     <Compile Include="IKeyCommands.cs" />
@@ -65,7 +58,6 @@
     <Compile Include="RedisSubscriber.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="redis.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

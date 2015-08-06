@@ -60,6 +60,26 @@ namespace Redis.Driver
         /// <returns>the value of key, or nil when key does not exist.</returns>
         Task<T> Get<T>(string key, Func<byte[], T> valueFactory, object asyncState = null);
         /// <summary>
+        /// Atomically sets key to value and returns the old value stored at key.
+        /// Returns an error when key exists but does not hold a string value.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task<byte[]> GetSet(string key, byte[] value, object asyncState = null);
+        /// <summary>
+        /// Atomically sets key to value and returns the old value stored at key.
+        /// Returns an error when key exists but does not hold a string value.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="valueFactory"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        Task<T> GetSet<T>(string key, byte[] value, Func<byte[], T> valueFactory, object asyncState = null);
+        /// <summary>
         /// Returns the values of all specified keys. 
         /// For every key that does not hold a string value or does not exist, 
         /// the special value nil is returned. Because of this, the operation never fails.

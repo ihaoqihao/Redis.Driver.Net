@@ -21,6 +21,8 @@ namespace Redis.Driver
 
         private readonly HashSet<string> _setChannels = new HashSet<string>();
         private readonly HashSet<string> _setPatterns = new HashSet<string>();
+
+        private readonly Timer _timer = null;
         #endregion
 
         #region Events
@@ -44,6 +46,7 @@ namespace Redis.Driver
             var arr = connectionString.Split(':');
             this._endPoint = new IPEndPoint(IPAddress.Parse(arr[1].Substring(2)), int.Parse(arr[2]));
             this.BeginConnect();
+            this._timer = new Timer(_ => this.Ping(), null, 0, 1000 * 10);
         }
         /// <summary>
         /// new
@@ -55,6 +58,7 @@ namespace Redis.Driver
         {
             this._endPoint = new IPEndPoint(IPAddress.Parse(host), port);
             this.BeginConnect();
+            this._timer = new Timer(_ => this.Ping(), null, 0, 1000 * 10);
         }
         #endregion
 
@@ -128,6 +132,15 @@ namespace Redis.Driver
                     try { this.Listener(channel, payload); }
                     catch (Exception ex) { Sodao.FastSocket.SocketBase.Log.Trace.Error(ex.Message, ex); }
                 });
+        }
+        /// <summary>
+        /// ping
+        /// </summary>
+        private void Ping()
+        {
+            var connection = this._currentConnection;
+            if (connection == null) return;
+            connection.BeginSend(new Packet(new RedisRequest(1).AddArgument("PING").ToPayload()));
         }
         /// <summary>
         /// subscribe channel

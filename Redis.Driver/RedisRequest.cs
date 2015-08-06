@@ -37,33 +37,22 @@ namespace Redis.Driver
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">value is null or empty.</exception>
+        /// <exception cref="ArgumentNullException">value is null.</exception>
         public RedisRequest AddArgument(string value)
         {
             if (value == null) throw new ArgumentNullException("value");
-
-            var bytes = Encoding.UTF8.GetBytes(value);
-            this._stream.WriteByte(36);//'$'
-            WriteRedisInteger(this._stream, bytes.Length);
-            this._stream.WriteByte(13);
-            this._stream.WriteByte(10);
-            this._stream.Write(bytes, 0, bytes.Length);
-            this._stream.WriteByte(13);
-            this._stream.WriteByte(10);
-
-            return this;
+            return this.AddArgument(Encoding.UTF8.GetBytes(value));
         }
         /// <summary>
         /// add argument
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="values"></param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">value is null or empty.</exception>
-        public RedisRequest AddArgument(params string[] value)
+        /// <exception cref="ArgumentNullException">value is null.</exception>
+        public RedisRequest AddArgument(params string[] values)
         {
-            if (value == null) throw new ArgumentNullException("value");
-
-            foreach (var child in value) this.AddArgument(child);
+            if (values == null) throw new ArgumentNullException("values");
+            foreach (var value in values) this.AddArgument(value);
             return this;
         }
         /// <summary>
@@ -84,6 +73,17 @@ namespace Redis.Driver
             this._stream.WriteByte(13);
             this._stream.WriteByte(10);
 
+            return this;
+        }
+        /// <summary>
+        /// add argument
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public RedisRequest AddArgument(byte[][] values)
+        {
+            if (values == null) throw new ArgumentNullException("values");
+            foreach (var value in values) this.AddArgument(value);
             return this;
         }
         /// <summary>

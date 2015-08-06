@@ -12,7 +12,7 @@ namespace Redis.Driver
     /// <summary>
     /// redis client
     /// </summary>
-    public sealed class RedisClient : PooledSocketClient<RedisResponse>, IStringCommands, IKeyCommands, IHashCommands
+    public sealed class RedisClient : PooledSocketClient<RedisResponse>, IStringCommands, IKeyCommands, IHashCommands, IListCommands
     {
         #region Constructors
         /// <summary>
@@ -57,6 +57,13 @@ namespace Redis.Driver
         {
             get { return this; }
         }
+        /// <summary>
+        /// list
+        /// </summary>
+        public IListCommands List
+        {
+            get { return this; }
+        }
         #endregion
 
         #region Override Methods
@@ -82,7 +89,7 @@ namespace Redis.Driver
         }
         #endregion
 
-        #region IKeyCommands Members
+        #region Key
         /// <summary>
         /// Removes the specified keys. A key is ignored if it does not exist.
         /// </summary>
@@ -145,7 +152,7 @@ namespace Redis.Driver
         }
         #endregion
 
-        #region IStringCommands Members
+        #region String
         /// <summary>
         /// If key already exists and is a string, 
         /// this command appends the value at the end of the string. 
@@ -210,6 +217,32 @@ namespace Redis.Driver
         Task<T> IStringCommands.Get<T>(string key, Func<byte[], T> valueFactory, object asyncState)
         {
             return this.ExecuteBulkReplies<T>(new RedisRequest(2).AddArgument("GET").AddArgument(key), valueFactory, asyncState);
+        }
+        /// <summary>
+        /// Atomically sets key to value and returns the old value stored at key.
+        /// Returns an error when key exists but does not hold a string value.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task<byte[]> GetSet(string key, byte[] value, object asyncState = null)
+        {
+            return this.ExecuteBulkReplies(new RedisRequest(3).AddArgument("GETSET").AddArgument(key).AddArgument(value), asyncState);
+        }
+        /// <summary>
+        /// Atomically sets key to value and returns the old value stored at key.
+        /// Returns an error when key exists but does not hold a string value.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="valueFactory"></param>
+        /// <param name="asyncState"></param>
+        /// <returns></returns>
+        public Task<T> GetSet<T>(string key, byte[] value, Func<byte[], T> valueFactory, object asyncState = null)
+        {
+            return this.ExecuteBulkReplies<T>(new RedisRequest(3).AddArgument("GETSET").AddArgument(key).AddArgument(value), valueFactory, asyncState);
         }
         /// <summary>
         /// Returns the values of all specified keys. 
@@ -339,7 +372,7 @@ namespace Redis.Driver
         }
         #endregion
 
-        #region IHashCommands Members
+        #region Hash
         /// <summary>
         /// Removes the specified fields from the hash stored at key. 
         /// Specified fields that do not exist within this hash are ignored. 
@@ -525,6 +558,73 @@ namespace Redis.Driver
         {
             return this.ExecuteIntegerReply(new RedisRequest(4).AddArgument("HSETNX")
                 .AddArgument(key).AddArgument(field).AddArgument(value), asyncState);
+        }
+        #endregion
+
+        #region List
+        /// <summary>
+        /// Insert all the specified values at the head of the list stored at key. 
+        /// If key does not exist, it is created as empty list before performing the push operations. 
+        /// When key holds a value that is not a list, an error is returned.
+        /// It is possible to push multiple elements using a single command call just specifying multiple arguments at the end of the command. 
+        /// Elements are inserted one after the other to the head of the list, from the leftmost element to the rightmost element. 
+        /// So for instance the command LPUSH mylist a b c will result into a list containing c as first element, b as second element and a as third element.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>the length of the list after the push operations.</returns>
+        Task<int> IListCommands.LPush(string key, string value, object asyncState)
+        {
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("LPUSH").AddArgument(key).AddArgument(value), asyncState);
+        }
+        /// <summary>
+        /// Insert all the specified values at the head of the list stored at key. 
+        /// If key does not exist, it is created as empty list before performing the push operations. 
+        /// When key holds a value that is not a list, an error is returned.
+        /// It is possible to push multiple elements using a single command call just specifying multiple arguments at the end of the command. 
+        /// Elements are inserted one after the other to the head of the list, from the leftmost element to the rightmost element. 
+        /// So for instance the command LPUSH mylist a b c will result into a list containing c as first element, b as second element and a as third element.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="values"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>the length of the list after the push operations.</returns>
+        Task<int> IListCommands.LPush(string key, string[] values, object asyncState)
+        {
+            return this.ExecuteIntegerReply(new RedisRequest(values.Length + 2).AddArgument("LPUSH").AddArgument(key).AddArgument(values), asyncState);
+        }
+        /// <summary>
+        /// Insert all the specified values at the head of the list stored at key. 
+        /// If key does not exist, it is created as empty list before performing the push operations. 
+        /// When key holds a value that is not a list, an error is returned.
+        /// It is possible to push multiple elements using a single command call just specifying multiple arguments at the end of the command. 
+        /// Elements are inserted one after the other to the head of the list, from the leftmost element to the rightmost element. 
+        /// So for instance the command LPUSH mylist a b c will result into a list containing c as first element, b as second element and a as third element.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>the length of the list after the push operations.</returns>
+        Task<int> IListCommands.LPush(string key, byte[] value, object asyncState)
+        {
+            return this.ExecuteIntegerReply(new RedisRequest(3).AddArgument("LPUSH").AddArgument(key).AddArgument(value), asyncState);
+        }
+        /// <summary>
+        /// Insert all the specified values at the head of the list stored at key. 
+        /// If key does not exist, it is created as empty list before performing the push operations. 
+        /// When key holds a value that is not a list, an error is returned.
+        /// It is possible to push multiple elements using a single command call just specifying multiple arguments at the end of the command. 
+        /// Elements are inserted one after the other to the head of the list, from the leftmost element to the rightmost element. 
+        /// So for instance the command LPUSH mylist a b c will result into a list containing c as first element, b as second element and a as third element.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="values"></param>
+        /// <param name="asyncState"></param>
+        /// <returns>the length of the list after the push operations.</returns>
+        Task<int> IListCommands.LPush(string key, byte[][] values, object asyncState)
+        {
+            return this.ExecuteIntegerReply(new RedisRequest(values.Length + 2).AddArgument("LPUSH").AddArgument(key).AddArgument(values), asyncState);
         }
         #endregion
 
