@@ -38,7 +38,7 @@ namespace Redis.Driver
                 clientConfig.MillisecondsReceiveTimeout);
 
             foreach (Config.ServerConfig server in clientConfig.Servers)
-                redisClient.TryRegisterEndPoint(string.Concat(server.Host, server.Port), new IPEndPoint(IPAddress.Parse(server.Host), server.Port));
+                redisClient.TryRegisterEndPoint(string.Concat(server.Host, server.Port), new[] { new IPEndPoint(IPAddress.Parse(server.Host), server.Port) });
 
             return redisClient;
         }
